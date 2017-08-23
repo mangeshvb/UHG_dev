@@ -68,6 +68,7 @@
 			maxPoll="${sf.maxPoll}"
 			deployRoot="src" 
 			rollbackOnError="true"  
+		/>
 	</target>
 	
 
