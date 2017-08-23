@@ -1,0 +1,999 @@
+<apex:page controller="ACETMemberDetailController" sidebar="false">
+
+    <apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+    <apex:includeScript value="{!$Resource.JqueryTableSorter}"></apex:includeScript>
+    <apex:includeScript value="/support/console/38.0/integration.js" />
+    <apex:stylesheet value="{!URLFOR($Resource.ACETResources, '/css/m/memberdetail.css')}" />    
+    <script type="text/javascript" src="https://js-cdn.dynatrace.com/jstag/145e12d594f/xob29014/1077eb28288ea333_bs.js" crossorigin="anonymous"></script>
+    <apex:form id="frmid">
+    <apex:outputPanel id="misFlag">
+    <input type = "hidden" value = "{!RedirecttoMisdirect}" id = "misdirectFlag"/>
+    <input type = "hidden" value = "{!ErrorMessage}" id = "errorMsg"/>
+    <input type = "hidden" value = "{!DefaultValue}" id = "defaultValue"/> 
+
+    </apex:outputPanel>
+        
+        <apex:outputPanel id="resultPanel">
+            <apex:actionStatus startText="requesting..." stopText="" id="myStatus" />
+        </apex:outputPanel>
+        <apex:actionFunction name="caseCreationOnSubmit" action="{!saveCaseOnSubmit}" rerender="resultPanel">
+            <apex:param name="caseTopicVal" assignTo="{!caseTopic}" value=""/>
+            <apex:param name="caseTypeVal" assignTo="{!caseType}" value=""/>
+            <apex:param name="caseSubTypeVal" assignTo="{!caseSubType}" value=""/>
+        </apex:actionFunction>
+        
+        <!-- Khoushik added below action function for continuation pattern User Story - US605469 -->
+        <apex:actionFunction name="afOnPageLoad" action="{!CallWSOnPageLoad}" rerender="coverages,messagePanel,PrimaryCareInfo,familymembers,address,phone,hlPanel,originator" status="AjaxLoader" oncomplete="showMask();initCoverageTable();initPCPTable();"/>
+        <apex:actionStatus id="AjaxLoader" onstart="ShowLoader()" onstop="HideLoader()"/>
+        <span class="loader" style=" display: none;">
+            <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                &nbsp;
+            </div>
+            <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                    <img src="/img/loading.gif" style="float: left; margin: 8px;"/>
+                    <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                </div>
+            </div>
+        </span>
+        <apex:actionFunction name="changeOriginator"
+            action="{!changeOriginator}" reRender="hlPanel,surrKeyPanel" />
+        <apex:actionFunction name="toggleShowCoverages"
+            action="{!toggleShowCoverages}" reRender="coverages,surrKeyPanel"
+            oncomplete="initCoverageTable();showMask();" />
+                    <!-- Khoushik changed action function for continuation User Story - US605469 -->
+        <apex:actionFunction name="selectPreferredCoverage" status="AjaxLoader"
+            action="{!selectPreferredCoverage}" 
+            reRender="" onComplete="CallGetMembership();"/>
+        <apex:actionFunction name="toggleShowPhysician"
+            action="{!toggleShowPrimaryPhysician}" reRender="PrimaryCareInfo" oncomplete="initPCPTable();"/>            
+        <apex:actionFunction name="selectPrimaryPhysician"  
+            action="{!selectPrimaryPhysician}" reRender="PrimaryCareInfo" oncomplete="initPCPTable();"/>
+        <!-- Khoushik added action function for continuation User Story - US605469 -->
+        <apex:actionFunction name="CallGetMembership" status="AjaxLoader" 
+            action="{!CallGetMembership}" reRender="address,phone,familymembers,originator,misFlag,ROI,caPanel,PrimaryCareInfo,surrKeyPanel,coverageDetails,generalInformation,messagePanel,buttonPanel,hlPanel,memberDetailHeader" oncomplete="checkFlags();hideMask();openConsumerDashboard();onChangeOrginator();"/>
+              
+        <apex:outputPanel id="hlPanel">
+           
+            <!-- Khoushik added attribute for continuation User Story - US605469 -->
+            <c:ACETInteractionHighlightsPanel InteractionAtt="{!Interaction}"     showALertAtt="{!isshowGroupALert}"
+                SubjectAtt="{!Subject}" AdditionalInfoAtt="{!AdditionalInfo}" TotalAlerts="{!lstMemAlert}" 
+                SurrogateKey="{!MemberDetail.SurrogateKey}"></c:ACETInteractionHighlightsPanel>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!!isMisdirectCaseCreation}">
+
+            <apex:sectionHeader title="Member Detail" id="memberDetailHeader">
+            </apex:sectionHeader>
+            <apex:outputPanel id="messagePanel" layout="none">
+
+                <apex:pageMessages />
+                <apex:inputHidden id="DisableOpenTopicDetail"
+                value="{!DisableOpenTopicDetail}" />
+            </apex:outputPanel>
+            <div id="errorMsgDiv" style="margin-left: 31%"></div>
+            <apex:outputPanel id="caPanel">
+            <c:ACETCaseActions attrShowMisdirectButton="true"
+                attrSourceOriginator="{!sourceOriginator}"
+                attrInteractionId="{!Interaction.Id}" attrSubjectId="{!Subject.Id}"
+                attrIsProviderFlow="{!Interaction.Originator_Type__c != 'Member'}"
+                attrSurrogateKey="{!selectedSurrogateKey}"
+                attrCaseDataWrapper="{!wrapper}"
+                attrRefreshNavigationTab="true" />
+            </apex:outputPanel>
+            <apex:pageBlock >
+               
+                <apex:pageblockSection id="calltopic" >
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Originator"></apex:outputLabel>
+                        <apex:selectList id="originator" size="1" value="{!Originator}">
+                            <apex:selectOptions value="{!Originators}"></apex:selectOptions>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Topic"></apex:outputLabel>
+                        <apex:outputPanel layout="none" id="calltopicdropdown">                                                        
+                             <select id="callTopicType" multiple="true" data-placeholder="Select Topic">
+                                <apex:repeat value="{!CallTopicOptions}" var="opt">                                                    
+                                    <option value="{!opt.Value}"><span class = "select-multi">{!opt.Label}</span></option>                                                                                              
+                                </apex:repeat>                                                                                                                          
+                            </select>                                                    
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageblockSection>
+
+           <c:ACETThirdPartyContacts SubjectIdAttr="{!Subject.Id}"  additionalInfoAtr="{!AdditionalInfo}" additionalInfoStrAtr="{!hpAdditionInfoStr}" InteractionAttr="{!Interaction}"></c:ACETThirdPartyContacts>  
+                <apex:pageBlockButtons location="bottom">
+                    <apex:outputPanel id="buttonPanel" layout="none" rendered="{!!isIsetSource}">
+                        <apex:commandButton id="btnopentopicdetail" value="Open Topic Detail"
+                        onclick="return openTopicDetail('{!JSENCODE(MemberDetailResultJson)}','{!JSENCODE(hpAdditionInfoStr)}','{!JSENCODE(Subject.Id)}','{!JSENCODE(MemberDetail.MemberId)}','{!JSENCODE(MemberDetail.SurrogateKey)}','{!JSENCODE(FamilyInfoStr)}','{!JSENCODE(ssn)}','{!JSENCODE(scrId)}')" disabled="{!DisableOpenTopicDetail}"/>
+                    </apex:outputPanel>
+                    <apex:outputPanel id="buttonPanel1" layout="none" rendered="{!isIsetSource}">
+                        <apex:commandButton id="createCaseButton" value="Create Case" onclick="createCaseDirect()" rerender="caseAddInfoModal" status="AjaxLoader"/>
+                    </apex:outputPanel>
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+
+            <apex:outputPanel id="surrKeyPanel" rendered="{!if(MemberDetail.SurrogateKey != null,true,false)}">
+            <apex:inputHidden id="selectedSurrogateKey" value="{!selectedSurrogateKey}" />
+            </apex:outputPanel>
+            <apex:pageBlock mode="mainDetail">  
+            <apex:outputpanel id="ROI" > 
+            <apex:outputpanel id="ROIinside" rendered="{!(memNotFound != '1' && isROI) }"> 
+           <!-- Roi values {!MemberDetail.ROIcontacts[0].FirstName}            
+             Roi values size{!MemberDetail.ROIcontacts.size}             
+            -->
+            <apex:pageblocksection title="Release Of Information" columns="1"  >
+
+              <apex:pageblocktable value="{!MemberDetail.ROIcontacts}" var="objROI" captionStyle="text-align:left;margin-bottom:3px;" border="1" rendered="{!AND(MemberDetail.ROIcontacts[0].FirstName != '',MemberDetail.ROIcontacts[0].LastName != '')}">
+                 <apex:column >
+                     <img src="{!URLFOR($Resource.ACETResources, '/img/m/' + IF(objROI.ContactStatus == true, 'active.jpg', 'inactive.jpg'))}" />
+                 </apex:column>
+                 <apex:column headerValue="First Name" value="{!objROI.firstName}"/> 
+                 <apex:column headerValue="Last Name" value="{!objROI.lastName}"/> 
+                 <apex:column headerValue="Middle Intial" value="{!objROI.middleName}"/> 
+                 <apex:column headerValue="Effective Date" value="{!objROI.effectiveDate}"/> 
+                 <apex:column headerValue="Termination Date" value="{!objROI.terminationDate}"/>
+                 <!--- apex:column headerValue="ROI Document" ><apex:commandLink value="Doc Link" /> </apex:column> -->             
+              </apex:pageblocktable>              
+            </apex:pageblocksection>
+            </apex:outputPanel>
+            </apex:outputPanel>
+                <apex:pageblockSection id="coverages" columns="1" title="Coverages" rendered="{!memNotFound != '1'}">
+                    <apex:inputHidden id="preferredCoverageGUID"
+                        value="{!ProferredCoverageGUID}"  />
+
+                    <apex:pageBlockTable id="coverage-table" value="{!Coverages}"
+                        var="cl" captionStyle="text-align:left;margin-bottom:3px;" onRowClick="Changecalltopic();">
+                        <apex:facet name="caption">
+                            <apex:outputPanel >
+                                <apex:outputPanel rendered="{!IsShowActiveCoveragesOnly}">
+                                    <input type="radio" name="showCoverage" value="Active"
+                                        checked="checked" style="vertical-align: middle" />Active
+                                <input type="radio" name="showCoverage"
+                                        value="All" style="vertical-align: middle" />All
+                            </apex:outputPanel>
+                                <apex:outputPanel rendered="{!NOT(IsShowActiveCoveragesOnly)}">
+                                    <input type="radio" name="showCoverage" value="Active"
+                                        style="vertical-align: middle" />Active
+                                <input type="radio" name="showCoverage"
+                                        value="All" checked="checked" style="vertical-align: middle" />All
+                            </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:column >
+                            <apex:inputHidden id="clGUID" value="{!cl.GUID}" />
+                            <img
+                                src="{!URLFOR($Resource.ACETResources, '/img/m/' + IF(cl.IsActive == true, 'active.jpg', 'inactive.jpg'))}" />
+                        </apex:column>
+                        <apex:column value="{!cl.CoverageType}"
+                            headerValue="Coverage Type" />
+                        <apex:column value="{!cl.GroupNumber}"
+                            headerValue="Group Number" />
+                        <apex:column value="{!cl.GroupName}" headerValue="Group Name" />
+                        <apex:column value="{!cl.Product}" headerValue="Product" />
+                        <apex:column value="{!cl.ProductType}" headerValue="Product Type" />
+                        <apex:column value="{!cl.EffectiveDate}"
+                            headerValue="Effective Date" />
+                        <apex:column value="{!cl.EndDate}" headerValue="End Date" />
+                        <apex:column value="{!cl.SourceCode}" headerValue="Source Code" />
+                        <apex:column value="{!cl.CoverageLevel}"
+                            headerValue="Coverage Level" />
+                        <apex:column id="onshoreRes" value="{!cl.OnshoreRestriction}"  headerValue="Onshore Restriction" />                             
+                    </apex:pageBlockTable>
+                </apex:pageblockSection>
+                
+                
+
+                <apex:pageblockSection id="coverageDetails" columns="2" title="Coverage Details" rendered="{!memNotFound != '1'}">
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Network"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.Network}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Funding Arrangement"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.FundingArragement}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Situs State"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.SitusState}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Benefit Plan ID"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.BenefitPlanId}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Member Status"></apex:outputLabel>
+                        <apex:outputText value="" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!currentAgentProfile == 'ACET EB Agent'}">
+                        <apex:outputLabel value="Termination Reason"></apex:outputLabel>
+                        <apex:outputText value="" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!currentAgentProfile == 'ACET EB Agent'}">
+                        <apex:outputLabel value="Hold Reason"></apex:outputLabel>
+                        <apex:outputText value="" />
+                    </apex:pageBlockSectionItem>                                                           
+                </apex:pageblockSection>
+
+                <apex:pageblockSection id="generalInformation" columns="2" title="General Information" >
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="First Name"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.FirstName}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Last Name"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.LastName}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound != '1'}">
+                        <apex:outputLabel value="Middle Name"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.MiddleInitial}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound != '1'}">
+                        <apex:outputLabel value="Suffix"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.Suffix}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound != '1'}">
+                        <apex:outputLabel value="Gender"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.Gender}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Date of Birth"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.DOB}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound != '1'}">
+                        <apex:outputLabel value="Age"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.Age}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound != '1'}">
+                        <apex:outputLabel value="Member ID"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.MemberID}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound != '1'}">
+                        <apex:outputLabel value="SSN"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.SSN}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound != '1'}">
+                        <apex:outputLabel value="Relationship"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.Relationship}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound != '1'}">
+                        <apex:outputLabel value="Spoken Language"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.SpokenLanguage}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound != '1'}">
+                        <apex:outputLabel value="Email"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.Email}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound != '1'}">
+                        <apex:outputLabel value="Asian Initiative Indicator"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.AsianInitiativeIndicator}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound != '1'}">
+                        <apex:outputLabel value="Original Effective Date"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.OriginalEffectiveDate}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound != '1'}">
+                        <apex:outputLabel value="Deceased Date"></apex:outputLabel>
+                        <apex:outputText value="{!MemberDetail.DeceasedDate}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound == '1'}">
+                        <apex:outputLabel value="Employer Name"></apex:outputLabel>
+                        <apex:outputText value="{!EmployerName}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound == '1'}">
+                        <apex:outputLabel value="State"></apex:outputLabel>
+                        <apex:outputText value="{!State}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound == '1'}">
+                        <apex:outputLabel value="Group Number"></apex:outputLabel>
+                        <apex:outputText value="{!GroupNumber}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!memNotFound == '1'}">
+                        <apex:outputLabel value="Zip"></apex:outputLabel>
+                        <apex:outputText value="{!Zip}" />
+                    </apex:pageBlockSectionItem>           
+                                        
+                    <apex:pageBlockSectionItem rendered="{!memNotFound == '1'}">
+                        <apex:outputLabel value="Phone"></apex:outputLabel>
+                        <apex:outputText value="{!phonenum}" />
+                    </apex:pageBlockSectionItem>
+                </apex:pageblockSection>
+                <apex:pageblockSection id="PrimaryCareInfo" columns="1" title="Primary Care Physician Information" rendered="{!memNotFound != '1'}">
+                <apex:pageBlockTable id="coverage-table1" value="{!MemberDetail.PCPAssignments}"
+                        var="pcp" captionStyle="text-align:left;margin-bottom:3px;" border="1">
+                        <apex:facet name="caption">
+                            <apex:outputPanel >
+                                <apex:outputPanel rendered="{!IsShowActivePhysiciansOnly}">
+                                    <input type="radio" name="showPhisician" value="Active"
+                                        checked="checked" style="vertical-align: middle" onclick="toggleShowPhysician();initPCPTable();"/>Active
+                                <input type="radio" name="showPhisician"
+                                        value="All" style="vertical-align: middle" onclick="selectPrimaryPhysician();initPCPTable();" />All
+                            </apex:outputPanel>
+                                <apex:outputPanel rendered="{!NOT(IsShowActivePhysiciansOnly)}">
+                                    <input type="radio" name="showPhisician" value="Active"
+                                        style="vertical-align: middle" onclick="toggleShowPhysician();initPCPTable();"/>Active
+                                <input type="radio" name="showPhisician"
+                                        value="All" checked="checked" style="vertical-align: middle" onclick="selectPrimaryPhysician();initPCPTable();" />All
+                            </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:column >
+                        <img  src="{!URLFOR($Resource.ACETResources, '/img/m/' + IF(pcp.IsActive == true, 'active.jpg', 'inactive.jpg'))}" />
+                                </apex:column>
+                       <apex:column value="{!pcp.firstName}" headerValue="First Name"  />
+                        <apex:column value="{!pcp.lastName}" headerValue="Last Name" />
+                        <apex:column value="{!pcp.pcpAssignmentType}" headerValue="PCP Assignment Type" />
+                        <apex:column value="{!pcp.effectiveDate}" headerValue="Effective Date" />
+                        <apex:column value="{!pcp.endDate}" headerValue="End Date" />
+                        
+                    </apex:pageblocktable>
+                </apex:pageblockSection>
+                <apex:pageblockSection id="familymembers" columns="1" title="Family Members" rendered="{!memNotFound != '1'}">
+
+                    <apex:pageBlockTable value="{!MemberDetail.FamilyMembers}" var="fm">
+                        <apex:column value="{!fm.FirstName}" headerValue="First Name" />
+                        <apex:column value="{!fm.LastName}" headerValue="Last Name" />
+                        <apex:column value="{!fm.suffix}" headerValue="Suffix" />
+                        <apex:column value="{!fm.MiddleInitial }" headerValue="Middle Name " />
+                        <apex:column value="{!fm.Relationship}" headerValue="Relationship" />
+                        <apex:column value="{!fm.FamilyId}" headerValue="ID" />
+                        <apex:column value="{!fm.Gender}" headerValue="Gender" />
+                        <apex:column value="{!fm.DOB}" headerValue="Date Of Birth" />
+                        <apex:column value="{!fm.Age}" headerValue="Age" />
+                    </apex:pageBlockTable>
+                </apex:pageblockSection>
+
+                <apex:pageBlockSection id="address" title="Address" columns="1" rendered="{!memNotFound != '1'}">
+                    <apex:pageBlockTable value="{!MemberDetail.Addresses}" var="addr">
+                        <apex:column value="{!addr.AddressLine1}"
+                            headerValue="Address Line 1" />
+                        <apex:column value="{!addr.AddressLine2}"
+                            headerValue="Address Line 2" />
+                        <apex:column value="{!addr.City}" headerValue="City" />
+                        <apex:column value="{!addr.State}" headerValue="State" />
+                        <apex:column value="{!addr.Zip}" headerValue="Zip" />
+                        <apex:column value="{!addr.AddressType}"
+                            headerValue="Address Type" />
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+
+                <apex:pageBlockSection id="phone" title="Phone" columns="1" rendered="{!memNotFound != '1'}">
+                    <apex:pageBlockTable value="{!MemberDetail.Phones}" var="phone">
+                        <apex:column value="{!phone.PhoneNumber}"
+                            headerValue="Phone Number" />
+                        <apex:column value="{!phone.PhoneNumberType}"
+                            headerValue="Phone Number Type" />
+                            <apex:column value="{!phone.primaryIndicator}"
+                            headerValue="Primary Indicator" />
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            <apex:pageBlockSection title="Case History ({!caseListSize })" columns="1" rendered="{!memNotFound != '1'}">
+                <apex:pageBlockTable id="caseHistory" value="{!CaseHistory}"
+                    var="case" html-cid="CaseHistoryTable">
+                    <apex:column headerValue="Case Number">
+                        <apex:outputLink value="/{!case.Id}">{!case.CaseNumber}</apex:outputLink>
+                    </apex:column>
+                    <apex:column value="{!case.Contact.Name}"
+                        headerValue="Subject Name" />
+                    <apex:column value="{!case.CreatedBy.Name}"
+                        headerValue="Created By" />
+
+                    <apex:column headerValue="Created Date and Time" >
+                        <apex:outputText value="{0,date,M/d/yyyy HH:mm}">
+                            <apex:param value="{!case.CreatedDate}" />
+                        </apex:outputText>
+                    </apex:column>
+
+                    
+                    <apex:column value="{!case.Topic__c}" headerValue="Topic" />
+                    <apex:column headerValue="Fulfillment">
+                     <apex:outputText value="Y" rendered="{!IF((case.create_letters__r.size!=null && case.create_letters__r.size > 0),true, false)}"/>
+                        <apex:outputText value="" rendered="{!IF((case.create_letters__r.size!=null && case.create_letters__r.size > 0),false, true)}"/>
+                    </apex:column>
+                    <apex:column value="{!case.Status}" headerValue="Status" />
+                    <apex:column value="{!case.Originator_Type__c}"
+                        headerValue="Originator Type" />
+                    <apex:column value="{!case.Interaction_Type__c}"
+                        headerValue="Interaction Type" />
+                    <apex:column value="{!case.Interaction__c}"
+                        headerValue="Interaction ID" />
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+           </apex:pageBlock>
+        </apex:outputPanel>
+        <c:ACETCaseActions attrShowMisdirectButton="true"
+                attrSourceOriginator="{!sourceOriginator}"
+                attrInteractionId="{!Interaction.Id}" attrSubjectId="{!Subject.Id}"
+                attrIsProviderFlow="{!Interaction.Originator_Type__c != 'Member'}"
+                attrSurrogateKey="{!selectedSurrogateKey}"
+                attrRefreshNavigationTab="true" 
+                attrLocation="bottom"/>
+
+        <div id="dialog">
+        <apex:pageBlock mode="edit" id="caseAddInfoModal">
+            <apex:pageBlockSection columns="1">            
+               
+                <apex:inputField value="{!caseMid.Topic__c}" id="callTopicID"/>
+                    
+                <!--<apex:outputText value="{!caseMid.Topic__c}" id="callTopicID"/>-->
+                <apex:inputField value="{!caseMid.Type__c}" id="caseTypeId"/>
+                <apex:inputField value="{!caseMid.Subtype__c}" id="caseSubTypeId"/>     
+            </apex:pageBlockSection>
+            <apex:pageBlockButtons location="bottom">
+                <button onclick="caseCreationOnSubmitScrt()">Submit</button>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+        </div>
+    </apex:form>
+
+
+    <apex:stylesheet value="{!URLFOR($Resource.jQueryDatatableResources,'jquery-ui.css')}" />
+
+    <apex:includeScript value="{!URLFOR($Resource.jQueryDatatableResources,'jquery.dataTables.min.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.jQueryDatatableResources,'jquery.dataTables.min.css')}" />
+
+    <apex:includeScript value="{!URLFOR($Resource.jQueryDatatableResources,'jquery.highlight.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.jQueryDatatableResources,'dataTables.searchHighlight.min.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.jQueryDatatableResources,'dataTables.searchHighlight.css')}" />
+
+     <apex:includeScript value="{!URLFOR($Resource.jQueryDatatableResources,'datetime-moment.js')}" />
+    <apex:includeScript value="/support/console/38.0/integration.js"/>
+    <script type="text/javascript">
+    
+        //US635546-SNI
+        function caseCreationOnSubmitScrt()
+        {   
+            var caseTopicVal = $("[id$='callTopicID']").val();
+            var caseTypeVal = $("[id$='caseTypeId']").val();
+            var caseSubTypeVal = $("[id$='caseSubTypeId']").val();
+            caseCreationOnSubmit(caseTopicVal, caseTypeVal, caseSubTypeVal);
+        }
+        
+        function createCaseDirect() {
+                $("#errorMsgDiv").html("");
+                var Seloriginator = $("[id$='originator']").val();
+                var $selOrig = $("[id$='originator']");
+                $selOrig.parent().find('.errorMsg').remove();
+                $selOrig.removeClass("error");
+                if(Seloriginator)
+                {
+                    $("#dialog" ).dialog( {
+                    modal: true, width:'auto',height:'auto',title: "Select Type and Subtype", draggable: false,closeOnEscape: true,
+                          close: function() {}
+                    }); 
+                    
+                }
+                else
+                {
+                    var errorMsg = "You must select an Originator before accessing the Topic";
+                    $selOrig.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+                }
+        }//US635546-SNI
+        
+function openTopicDetail(MemberDetailResultJson,additionalInfoStr,subjectId,memberId,surrogateKey,familyInfoStr,ssn,scr){
+        console.log('additionalInfoStr >> '+additionalInfoStr);
+       
+        console.log('MemberDetailResultJson' + MemberDetailResultJson);
+       
+        var memberDetailObj = JSON.parse(MemberDetailResultJson);
+        var AdditionalInfoObj = JSON.parse(additionalInfoStr);
+        //var memberId = '{!MemberDetail.MemberID}';
+        //var ssn = '{!MemberDetail.SSN}';
+        var SRK= memberDetailObj.SurrogateKey;
+        //var SRK= memberDetailObj.PreferredCoverage.SurrogateKey;    
+        var BundleOptionID = memberDetailObj.BundleOptionID;
+        var CoverageType = memberDetailObj.PreferredCoverage.CoverageType;  
+        var EffectiveDate = memberDetailObj.EffectiveDate; 
+        var EndDate = memberDetailObj.EndDate; 
+        console.log('CoverageType::' + CoverageType+ '::EffectiveDate :: ' + EffectiveDate + ' ::EndDate ::' + EndDate );    
+        console.log(memberDetailObj);
+        console.log("****************************************");
+            $("#errorMsgDiv").html("");
+            var Seloriginator = $("[id$='originator']").val();
+            var $selOrig = $("[id$='originator']");
+            $selOrig.parent().find('.errorMsg').remove();
+            $selOrig.removeClass("error");
+            var callTopics = $("#callTopicType").chosen().val();
+            
+            var isActive = true;
+            if(Seloriginator){
+            if(callTopics){
+                for(var i = 0; i < callTopics.length; i++){
+                    var callTopic = callTopics[i];
+                                        
+                    var hightlightPanelInfo = additionalInfoStr;
+                    var selectedSurrKey = $("[id$='selectedSurrogateKey']").val();
+                    var urlParam = 'interactionId={!JSENCODE(Interaction.Id)}' +'&' + 'contactId='+subjectId+ '&' + 'sourceOriginator={!JSENCODE(sourceOriginator)}' + '&' + 'additionalInfo=' + additionalInfoStr;
+                        urlParam = urlParam + '&memberId='+memberId ;
+                        urlParam = urlParam + '&SRK=' + SRK;
+
+                    if(callTopic=='Pharmacy Inquiry'){
+                       sforce.console.getFocusedPrimaryTabId(function(result){
+
+                        var url = '/apex/ACETPharmacypage?'+ urlParam;
+                        url = url + '&callTopic=Pharmacy Inquiry';
+
+                            sforce.console.openSubtab(result.id , url, isActive,'Pharmacy Inquiry', null,openedTabs);
+
+                        });
+                    }
+                    else if(callTopic == 'Rx Enrollment')
+                    {
+                        sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETPharmacyInquiry?'+ 'callTopic=Rx Enrollment' + '&' + urlParam;
+                        sforce.console.openSubtab(result.id , url, isActive,'Rx Enrollment', null,openedTabs);
+                        });
+                    }
+                    /* Commented by Rama on 6/6/2017 for User Story - US661689. Will be reused in future*/
+                   
+                  /*else if(callTopic == 'View Fee Schedule'){
+                        sforce.console.getFocusedPrimaryTabId(function(result){
+                        //Added benefitPlanId as parameter by Avish as a part of US596131
+                        var memberIdvar = '{!MemberDetail.MemberId}';
+                        var groupNumber;
+                        if(memberDetailObj.PreferredCoverage != null){
+                            groupNumber  = memberDetailObj.PreferredCoverage.GroupNumber; 
+                            console.log('Mnz_groupNumber>>> ' + groupNumber);
+                        }
+                       // console.log('groupNumber>>> ' + groupNumber + ' BenefitId>>> ' + '{!JSENCODE(MemberDetail.BenefitPlanId)}');
+                        var url = '/apex/ACETProviderLookupPagination?'+ urlParam +'&ProviderId={!ProviderId}'+'&Id='+memberId + '&SRK='+SRK + '&grpnum='+groupNumber + '&benefitPlanId='+memberDetailObj.BenefitPlanId;
+                            sforce.console.openSubtab(result.id , url, isActive,'Provider Lookup', null,openedTabs);
+                            });    
+                            
+                  } */
+
+                    else if(callTopic == 'Provider Lookup'){
+                        sforce.console.getFocusedPrimaryTabId(function(result){
+                        //Added benefitPlanId as parameter by Avish as a part of US596131
+                        var memberIdvar = '{!MemberDetail.MemberId}';
+                        var groupNumber;
+                        if(memberDetailObj.PreferredCoverage != null){
+                            groupNumber  = memberDetailObj.PreferredCoverage.GroupNumber; 
+                            console.log('Mnz_groupNumber>>> ' + groupNumber);
+                        }
+                       // console.log('groupNumber>>> ' + groupNumber + ' BenefitId>>> ' + '{!JSENCODE(MemberDetail.BenefitPlanId)}');
+                        var url = '/apex/ACETProviderLookup?'+ urlParam +'&ProviderId={!ProviderId}'+'&Id='+memberId + '&SRK='+SRK + '&grpnum='+groupNumber + '&benefitPlanId='+memberDetailObj.BenefitPlanId;
+                            url = url + '&' + 'scrId=' + scr + '&' + 'rl=' + memberDetailObj.RelationShipCode + '&' + 'fn=' + memberDetailObj.FirstName + '&' + 'ln=' + memberDetailObj.LastName ;
+                            url = url + '&' + 'gn=' + memberDetailObj.Gender + '&' + 'dob=' + memberDetailObj.DOB+ '&' + 'ssnId=' + ssn + '&' + 'grpno=' + groupNumber; 
+                            console.log('providerurl'+url);
+                            sforce.console.openSubtab(result.id , url, isActive,'Provider Lookup', null,openedTabs);
+                            });
+                  }
+
+                   else if(callTopic == 'Member Other Inquiry'){
+                        sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = 'apex/ACETMemberOtherInquiry?'+ urlParam;
+                        console.log(url);
+                        url = url + '&' +'Id={!JSENCODE(Subject.EID__c)}';
+                            sforce.console.openSubtab(result.id , url, isActive,'Member Other Inquiry', null,openedTabs);
+
+                        });
+
+                    }
+                    else if(callTopic=='View Authorizations'){
+                          sforce.console.getFocusedPrimaryTabId(function(result){
+                        sforce.console.openSubtab(result.id, '/apex/ACETViewAuthorization?'+ urlParam + '&' +'DOB='+AdditionalInfoObj.DOB + '&' + 'SitusState='+AdditionalInfoObj.SitusState +'&vccdParams='+vccdParams, isActive,'View Authorizations', null,openedTabs);
+
+                      });
+                    }
+                    else if(callTopic=='POC View Authorizations'){
+                          sforce.console.getFocusedPrimaryTabId(function(result){
+                        sforce.console.openSubtab(result.id, '/apex/ACETViewAuthorizationPOC?'+ urlParam + '&' +'DOB='+AdditionalInfoObj.DOB + '&' + 'SitusState='+AdditionalInfoObj.SitusState  +'&vccdParams='+vccdParams, isActive,'View Authorizations POC', null,openedTabs);
+
+                      });
+                    }
+                    else if(callTopic=='View Payments'){
+                         var url = 'apex/ACETClaimPayment?'+ urlParam;
+                         url = url + '&' +'DOB='+AdditionalInfoObj.DOB + '&' + 'SitusState='+AdditionalInfoObj.SitusState  +'&'+ 'EffectiveDate='+AdditionalInfoObj.EffectiveDate+'&'+'EndDate='+AdditionalInfoObj.EndDate;
+                            sforce.console.getFocusedPrimaryTabId(function(result){
+                            sforce.console.openSubtab(result.id,url, isActive,'Payment Search', null,openedTabs);
+
+                        });
+                    }
+                    else if(callTopic=='View PCP Referrals'){
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        sforce.console.openSubtab(result.id, '/apex/ACETReferralSearch?'+ urlParam + '&' +'DOB='+AdditionalInfoObj.DOB+ '&' +  'SitusState='+AdditionalInfoObj.SitusState   +'&vccdParams='+vccdParams, isActive,'View PCP Referrals', null,openedTabs);
+
+                      });
+                    
+                    }else if(callTopic == 'Consumer Accounts'){
+                        sforce.console.getFocusedPrimaryTabId(function(result){
+                            var url = '/apex/ACETConsumerAccount?'+ urlParam;
+                            console.log("Url is :: "+url);
+                            sforce.console.openSubtab(result.id , url, isActive,'Consumer Accounts', null,openedTabs);
+
+                        });
+                    }else if(callTopic == 'Consumer Accounts POC'){
+                        sforce.console.getFocusedPrimaryTabId(function(result){
+                            var url = '/apex/ACETConsumerAccountPOC?'+ urlParam;
+                            sforce.console.openSubtab(result.id , url, isActive,'Consumer Accounts', null,openedTabs);
+
+                        });
+                    }else if(callTopic == 'View Claims'){
+
+                        sforce.console.getFocusedPrimaryTabId(function(result){
+                            sforce.console.openSubtab(result.id, '/apex/ACETClaimSearch?'+ urlParam + '&' +'DOB='+AdditionalInfoObj.DOB + '&' + 'SitusState='+AdditionalInfoObj.SitusState +'&vccdParams='+vccdParams, isActive,'Claims Search', null,openedTabs);
+
+                          });
+                    }else if(callTopic == 'Coordination of Benefits'){
+
+                             initiateChildVFPage(MemberDetailResultJson,'COB',urlParam);
+
+                    }else if(callTopic == 'View Member Eligibility'){
+                        urlParam = urlParam + "&Id={!JSENCODE(IndividualIdentifier)}";
+                        sforce.console.getFocusedPrimaryTabId(function(result){
+                            sforce.console.openSubtab(result.id ,'/apex/ACETMemberEligibility?'+urlParam, true,'View Member Eligibility', null);
+                          });                       
+                        
+                    }
+                     else if(callTopic == 'View Consumer Dashboard'){
+                       sforce.console.getFocusedPrimaryTabId(function(result){
+                            var url = '/apex/ACETLaunchConsumerDashboard?' + urlParam;
+                            sforce.console.openSubtab(result.id , url, isActive,'Consumer Dashboard', null,openedTabs);
+
+                        });
+
+                     }
+                     else if(callTopic == 'Create Authorization'){
+                       sforce.console.getFocusedPrimaryTabId(function(result){
+                            var url = '/apex/ACETCreateAuthorization?' + urlParam;
+                            sforce.console.openSubtab(result.id , url, isActive,'Create Authorization', null,openedTabs);
+                                                    });
+
+                     }
+                     else if(callTopic == 'Create PCP Referral'){
+                       sforce.console.getFocusedPrimaryTabId(function(result){
+                            var url = '/apex/ACETCreatePCPReferral?' + urlParam;
+                            sforce.console.openSubtab(result.id , url, isActive,'Create PCP Referral', null,openedTabs);
+
+
+                        });
+
+                     }
+                     else if(callTopic == 'Enroll Member'){
+                       sforce.console.getFocusedPrimaryTabId(function(result){
+                        //Removed enrollag, rehirepolicy and group size parameters from below URL for US585208 -- by divya -- 04/05/17 
+                        var url = '/apex/ACETEnrollMember?'+'interactionId={!Interaction.Id}' +'&' + 'contactId='+subjectId+ '&' +'memberEnrollment=false'+'&'+'additionalInfo=' + hightlightPanelInfo + '&' + 'Id='+memberId + '&' + 'callTopic=Enroll Member&groupId={!JSENCODE(groupId)}' + '&' + 'SRK=' + selectedSurrKey;
+                        sforce.console.openSubtab(result.id , url, isActive,'Enroll Member', null,openedTabs);
+
+                        });
+
+                     }
+                     else if(callTopic == 'Reinstate Member'){
+                       sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETReinstateMember?'+'interactionId={!Interaction.Id}' +'&' + 'contactId='+subjectId + '&' + 'additionalInfo=' + hightlightPanelInfo + '&' + 'Id='+memberId + '&' + 'Relationship='+memberDetailObj.Relationship+'&groupId={!groupId}' + '&' + 'SRK=' + selectedSurrKey;
+                        sforce.console.openSubtab(result.id , url, isActive,'Reinstate Member', null,openedTabs);
+
+                        });
+
+                     }
+
+                     else if(callTopic == 'Terminate Member'){
+                       sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETTerminateMember?'+'interactionId={!Interaction.Id}' +'&' + 'contactId='+subjectId + '&' + 'additionalInfo=' + hightlightPanelInfo + '&' + 'Id='+memberId + '&' + 'Relationship='+memberDetailObj.Relationship+'&groupId={!groupId}' + '&' + 'SRK=' + selectedSurrKey;
+                        sforce.console.openSubtab(result.id , url, isActive,'Terminate Member', null,openedTabs);
+
+                        });
+
+                     }
+                     else if(callTopic == 'Member Level Exceptions'){
+                       sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETCaseDocumentation?'+'interactionId={!Interaction.Id}' +'&' + 'contactId='+subjectId + '&' + 'additionalInfo=' + hightlightPanelInfo + '&' + 'memberId='+memberId + '&' + 'Relationship='+memberDetailObj.Relationship + '&' + 'SRK=' + selectedSurrKey + '&' + 'callTopic=Member Level Exceptions' ;
+                        sforce.console.openSubtab(result.id , url, true,'Member Level Exceptions', null,openedTabs);
+
+                        });
+                     }
+
+                     else if(callTopic == 'Plan Benefits'){
+                             
+                            sforce.console.getFocusedPrimaryTabId(function(result){
+                            sforce.console.openSubtab(result.id, '/apex/ACETPlanBenefitSearch?'+ urlParam + '&' +'DOB='+AdditionalInfoObj.DOB+ '&' + 'SitusState='+AdditionalInfoObj.SitusState +'&vccdParams='+vccdParams +'&bundleOptionId='+BundleOptionID + '&CoverageType=' + CoverageType + '&EffectiveDate=' + EffectiveDate + '&EndDate=' + EndDate, isActive,'Plan Benefits', null,openedTabs);
+                        });
+
+                      }
+                     else if(callTopic == 'Update Member Details' || callTopic == 'Update Member Detail'){
+                       
+                       sforce.console.getFocusedPrimaryTabId(function(result){
+                       var memberIdvar = '{!MemberDetail.MemberId}';
+                       var groupNumber;
+                       if(memberDetailObj.PreferredCoverage != null){
+                           groupNumber  = memberDetailObj.PreferredCoverage.GroupNumber; 
+                           console.log('Mnz_groupNumber>>> ' + groupNumber);
+                       }
+                       var url = '/apex/ACETUpdateMemberInfo?'+'interactionId={!Interaction.Id}' +'&' + 'contactId='+subjectId ;
+                       url = url + '&' + 'additionalInfo=' + hightlightPanelInfo + '&' + 'Id='+ memberId + '&' + 'SRK=' + selectedSurrKey + '&'  +'&vccdParams='+vccdParams + '&'  +'&phn='+ JSON.stringify(memberDetailObj.Phones)+ '&'  +'&email='+ JSON.stringify(memberDetailObj.Email);
+                       url = url + '&' + 'scrId=' + scr + '&' + 'rl=' + memberDetailObj.RelationShipCode + '&' + 'fn=' + memberDetailObj.FirstName + '&' + 'ln=' + memberDetailObj.LastName ;
+                       url = url + '&' + 'gn=' + memberDetailObj.Gender + '&' + 'dob=' + memberDetailObj.DOB+ '&' + 'ssnId=' + ssn + '&' + 'grpno=' + groupNumber;    
+                           sforce.console.openSubtab(result.id , url, isActive,'Update Member Detail', null,openedTabs);
+                       });
+
+                     }
+
+                    //Added by Pavan for US549427
+                         else if(callTopic == 'Communications'){
+                             sforce.console.getFocusedPrimaryTabId(function(result){
+                                 var url = '/apex/ACETCommunicationsSearchPage?'+ urlParam;
+                                 sforce.console.openSubtab(result.id , url, isActive,'Communications', null,openedTabs);
+                                 console.log('communication--->'+url);
+                             });
+                         }
+                    // Added by Pavan Mokkapati for US549399
+                    else if(callTopic == 'Materials Request'){
+                             sforce.console.getFocusedPrimaryTabId(function(result){
+                                 var url = '/apex/ACETFormsHistory?'+ urlParam;
+                                 sforce.console.openSubtab(result.id , url, isActive,'Materials Request', null,openedTabs);
+                                 
+                             });
+                         }
+                    else if(callTopic == 'ID Card Request'){
+                         console.log('familyInfoStr--->'+familyInfoStr);
+                         sforce.console.getFocusedPrimaryTabId(function(result){
+                             var url = '/apex/ACETIdCardRequest?familyMembers='+familyInfoStr+'&groupId={!JSENCODE(groupId)}&'+urlParam;
+                             sforce.console.openSubtab(result.id , url, isActive,'ID Card Request', null,openedTabs);
+                             
+                         });
+                    }
+                    
+                }
+                //clear selection
+                $("#callTopicType").val('').trigger('chosen:updated');
+            }
+            }else{
+                
+                var errorMsg = "You must select an Originator before accessing the Topic";
+                $selOrig.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+            }
+            return false;
+        }                
+        <!-- Khoushik script added for continuation pattern User Story - US605469 -->
+        
+        function ShowLoader() {
+            $('.loader').fadeIn('fast');
+        }
+
+        function HideLoader() {
+            $('.loader').fadeOut('fast');
+        }
+
+        var vccdParams;
+        $(document).ready(function(){
+            var temp = $("[id$='onshoreResheader']").children();
+            $(temp).css("width","60px");
+        
+            $('[cid$="CaseHistoryTable"]').parent('table').eq(0).DataTable({
+                //enables results highlight
+                searchHighlight: true,
+                "pagingType": "full_numbers",
+                //sets record lengths to show in picklist
+                aLengthMenu: [
+                    [10, 25, 50, 100, 200, -1],
+                    [10, 25, 50, 100, 200, "All"]
+                ],
+                "iDisplayLength": 50,
+                 order: [[3, 'desc']],
+
+            });
+           
+            if('{!$CurrentPage.parameters.vccdParams}' != '' ) {
+                vccdParams =  JSON.parse('{!$CurrentPage.parameters.vccdParams}');
+                if (vccdParams.callTopic != '') {
+                    $("#callTopicType").val(vccdParams.callTopic).trigger("chosen:updated");
+                }   
+            }
+            $("#errorMsgDiv").html("");
+            var Seloriginator = $("[id$='originator']").val();
+            var $selOrig = $("[id$='originator']");
+            $selOrig.parent().find('.errorMsg').remove();
+            $selOrig.removeClass("error");
+            var callTopics = $("#callTopicType").chosen().val();
+            //$("[id$='originator']").addClass("error").parent().append('');
+            //$("[id$='btnopentopicdetail']").click();
+            
+        });
+
+    </script>
+    <script>
+        var subtabIds = new Array();
+        
+
+        var openedTabs = function openedTabs(result) {
+            //Report whether we succeeded in opening the subtab
+            if (result.success == true) {
+                subtabIds.push(result.id);
+            } else {
+            }
+        };
+
+         //added by Khoushik on 09/28/2016 for User Story - US378010
+         function initiateChildVFPage(MemberDetailResultJson,childVFpagename, url){
+             var strjson = MemberDetailResultJson;
+             var listener = function (result){
+                        var childId = result.message;
+                        sforce.console.fireEvent('ParentDataResponse_'.concat(childId), strjson ); };
+                        var parentId = Math.floor((Math.random() * 1000) + 500);
+                        sforce.console.addEventListener('RequestParentData_'.concat(parentId), listener);
+                        var openSubtab = function openSubtab(result) {
+                        var primaryTabId = result.id;
+                        if(childVFpagename == 'COB'){
+                        sforce.console.openSubtab(primaryTabId ,'/apex/ACETCordinationOfBenefits?parentId='+parentId+'&'+url, true,'Coordination of Benefits', null);
+                        }
+                         if(childVFpagename == 'MemberEligibilty'){
+                        sforce.console.openSubtab(primaryTabId ,'/apex/ACETMemberEligibility?parentId='+parentId+'&'+url, true,'View Member Eligibility', null);
+                        }
+                     };
+                        sforce.console.getEnclosingPrimaryTabId(openSubtab);
+                     }
+
+
+         function initCoverageTable(){
+            $("input[type='radio'][name='showCoverage']").on("change", function(){
+                toggleShowCoverages();
+            });
+
+            $("[id$='coverage-table']").find("tr").click(function(){
+                //highlight selected row
+                $(this).parent().children().removeClass('active');
+                $(this).addClass('active');
+
+                //assign Surrogate Key after postback and refresh higlight panel
+                var surrid = $(this).find("[id$='clSurrogateKey']").val();
+                $("[id$='selectedSurrogateKey']").val(surrid);
+
+                //post back and refresh hightpanel and member family
+                //Khoushik - Added for selecting the preferred coverage - User Story - US605469
+                var guid = $("[id$='coverage-table']").find(".active").find("[id$='clGUID']").val();
+                $("[id$='preferredCoverageGUID']").val(guid);
+                selectPreferredCoverage();
+            });
+
+           //initially sort table by coverage, end date and effective date
+           var coverages = '{!Coverages.size}';
+           if(coverages != 0){
+               $("[id$='coverage-table']").tablesorter({
+                    sortList: [[1,0],[7,1],[6,1]]
+                });
+            }
+
+            //highlight the first row of medical coverages as preferred coverage line
+            var firstRowFound = false;
+            $("[id$='coverage-table']").find("tbody tr").each(function(){
+                var $tr = $(this);
+                $tr.find("td").each(function(){
+                    if($(this).html() == 'Medical' && firstRowFound == false){
+                        $tr.addClass('active');
+                        firstRowFound = true;
+                    }
+                });
+            });
+
+            //highlight first row by default
+            if(!firstRowFound){
+                $("[id$='coverage-table']").find("tbody tr:first").addClass('active');
+            }
+
+            //post back and refresh hightpanel and member family
+            //Khoushik - Added for selecting the preferred coverage - User Story - US605469
+            var guid = $("[id$='coverage-table']").find(".active").find("[id$='clGUID']").val();           
+            $("[id$='preferredCoverageGUID']").val(guid);
+            var surrid = $("[id$='coverage-table']").find(".active").find("[id$='clSurrogateKey']").val();
+            $("[id$='selectedSurrogateKey']").val(surrid);
+            selectPreferredCoverage();
+        }
+
+        function initPCPTable(){
+           $("tr").removeClass('last'); 
+           //initially sort table by coverage, end date and effective date
+           var primaryList = {!lstPrimaryCarePhysicianWrapper.size};
+           if(primaryList != 0){
+               $("[id$='coverage-table1']").tablesorter({
+                    sortList: [[5,1]]
+                });
+            }
+        }
+        
+        
+        $(document).ready(function() {
+            //Khoushik - Added for continuation pattern User Story - US605469
+           afOnPageLoad();
+        });
+        
+        function onChangeOrginator(){
+            $("#selectedTPName").change(function(){
+                var currentTp = $(this).val();
+                var ODefault = $(this).attr("name");
+                var oHtml = $("[id$='originator']").html();
+                var existedTP = $("[id$='originator']").find("#currentTP");
+                var newOption;
+                if($(existedTP).length != 0){
+                    $("[id$='originator']").find("#currentTP").remove();
+                }
+                if(currentTp == ''){
+                    $("[id$='originator']").val(defaultOriginator);
+                }else if(ODefault == 'none'){
+                    newOption = "<option id = 'currentTP' value = 'currentTp' selected='selected'>"+currentTp+"</option>";
+                    $("[id$='originator']").append(newOption )
+                }
+                
+            });
+            
+           //added by bhanu : For third party contact : Ends
+           $("[id$='originator']").wrap('<div class="requiredInput"></div>').parent().prepend('<div class="requiredBlock"></div>');
+
+           var defaultOriginator = $("[id$='originator']").val();
+           $("[id$='originator']").on("change", function(){
+               if($(this).val()){
+                   $(this).parent().find('.errorMsg').remove();
+                   $(this).removeClass("error");
+               }
+               if($(this).val() == 'thirdPartId'){
+                checkThirdPartyContacts();
+               }else if ($(this).val() == 'currentTp'){
+                   //do nothing
+               }
+               else{
+               var existedTP = $("[id$='originator']").find("#currentTP");
+               $(existedTP).remove();
+                changeOriginator();
+               }
+            });
+            $("#callTopicType").chosen();
+        }
+        
+        function Misdirect(){
+            var url = 'interactionId={!JSENCODE($CurrentPage.parameters.interactionId)}';
+            url +='&contactId={!JSENCODE($CurrentPage.parameters.contactId)}';
+            url +='&callTopic=Provider Other Inquiry';
+            url +='&originatorRelationship={!wrapper.AdditionalInfo.OriginatorRelationship}';
+            sforce.console.getFocusedPrimaryTabId(function(result){
+                url = 'apex/ACETMemberOpenTopicMisdirect?'+url;
+                sforce.console.openSubtab(result.id , url, true,'Cancel', null);
+                });
+            console.log(url);
+            return false;
+        }
+
+        function validateAddThirdpartyForm(){
+
+        }
+        
+        function checkFlags(){
+            var flag =$("#misdirectFlag").val();
+            if(flag == 'true'){
+               var strError = $("#errorMsg").val();
+               var defaultValue = $("#defaultValue").val();
+               createCaseMisdirect('ACETMisdirectedCall',strError,defaultValue);
+            }
+        }
+        
+        function openConsumerDashboard(){
+            var Condash = '{!JSENCODE(consumerDashURL)}';
+            if(Condash){
+                window.open(Condash ,'_blank','toolbars=0, width=1200, height=800 ,left=0 ,top=0 ,scrollbars=1 ,resizable=1');
+            }
+        }
+        
+        function setFocusOnLoad(){}
+    </script>
+    <style type="text/css">
+        .imgclass:hover {
+            background-image: url('/img/help/helpOrbs.gif');
+            background-repeat: no-repeat;
+            width: 16px;
+            height: 15px;
+            background-position: right;
+        }
+        
+        .imgclass {
+            background-image: url('/img/help/helpOrbs.gif');
+            background-repeat: no-repeat;
+            width: 16px;
+            height: 15px;
+        }
+    </style>
+    <!-- resources for multiple selection dropdown -->
+    <apex:stylesheet value="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"/>
+    <apex:includeScript value="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></apex:includeScript>
+    <apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/vendor/chosen.jquery.min.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.ACETResources, '/css/vendor/chosen.min.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/main.js')}" />
+</apex:page>

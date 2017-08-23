@@ -1,0 +1,532 @@
+<apex:page controller="ACETPlanBenefitSearchController" id="pgId" action="{!CallGetSubscriptionBenefitWS}">
+    <apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+    <apex:stylesheet value="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+    <apex:includeScript value="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></apex:includeScript>
+    <apex:includeScript value="{!$Resource.JqueryTableSorter}"></apex:includeScript>
+    <apex:includeScript value="/support/console/30.0/integration.js" />
+    <apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/main.js')}" />
+    <apex:includeScript value="{!$Resource.ACETResources}" />
+    <apex:pageMessages />
+    <apex:form id="frm">
+        <apex:actionStatus id="refreshMemberStatus">
+            <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                    &nbsp;
+                </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>     
+    <Script>
+    function callBundleService(elem){
+
+        toggleShowPlanBenefits();
+    }
+    
+    function clearForm(){
+            $("[id$='btnClear']").closest('form').find("input[type=text], error,select, input[type=hidden]").val("");
+            $("[id$='groupname1']").removeClass("error").parent().find(".errorMsg").remove();
+            $("[id$='PolicyNumber']").removeClass("error").parent().find(".errorMsg").remove();
+            $("[id$='searchstate']").removeClass("error").parent().find(".errorMsg").remove();
+            $("[id$='pbsearch']").find(".pbError").remove();
+            clearResults();
+            return true;
+        }
+     //Code added by Avish for auto scroll to the Group Result section when clicked on Search button on 05302017
+     function navigateToSection(nameAttr){
+         
+        if(nameAttr == 'SearchButton'){
+            var elem = $("[id$='groupPlanSec']");
+            if(elem) {
+                $('html').scrollTop(elem.offset().top);
+                $('html').scrollLeft(elem.offset().left);
+            }
+        }else if(nameAttr == 'GroupBundleLink'){
+            var elem = $("[id$='groupBundleSec']");        
+            if(elem) {
+                $('html').scrollTop(elem.offset().top);
+                $('html').scrollLeft(elem.offset().left);
+            }
+        }    
+     }  
+         
+    function validateSearch(){
+            
+            var $pbsearch= $("[id$='pbsearch']");
+            var $groupId = $("[id$='PolicyNumber']");
+            var $groupname = $("[id$='groupname1']");
+            var $statecode = $("[id$='searchstate']");
+                
+            $pbsearch.find(".pbError").remove();  
+            $groupId.removeClass("error").parent().find(".errorMsg").remove();
+            $groupname.removeClass("error").parent().find(".errorMsg").remove();
+            $statecode.removeClass("error").parent().find(".errorMsg").remove();
+            
+            var ValidationResult = true;
+            
+            if($groupId.val())
+            {
+                if(($groupId.val().length < 7 || $groupId.val().length > 19)) 
+                {                 
+                     var errorMsg = 'Enter a Valid Group ID or Group Tax ID';  
+                   //  var errorMsg1 = 'Group ID must be between 7 and 19 characters or it is invalid';
+                   //  $("[id$='pbsearch']").prepend('<div class="pbError">Error: Invalid Data. <br/>' + errorMsg + '</div>');
+                     $groupId.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+                     ValidationResult = false;
+               }     
+                     
+            }           
+            
+           else {
+             if(!$groupId.val() && $groupname.val() && !$statecode.val()){ 
+                    if($groupname.val().length==1){
+                    var errorMsg = 'Name Search requires Group Name and State';
+                    var errorMsg1 = "You must enter at least 2 characters";
+                    $("[id$='pgId:frm:pbsearch']").prepend('<div class="pbError">Error: Invalid Data. <br/>' + errorMsg + '</div>');
+                    $groupname.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg1 + '</div>'); 
+                    $statecode.addClass("error").parent().append(); 
+                    ValidationResult = false;
+                   }
+                else if($groupname.val().length > 1){
+                    var errorMsg = 'Name Search requires Group Name and State';
+                    $("[id$='pbsearch']").prepend('<div class="pbError">Error: Invalid Data. <br/>' + errorMsg + '</div>');
+                    // $statecode.addClass().parent().append('<div class="errorMsg"><strong>Error:</strong> ' + '</div>'); 
+                     $statecode.addClass("error").parent().append(); 
+                    ValidationResult = false;
+                   }
+               }               
+           }
+              
+          if(!$groupId.val() && !$groupname.val() && $statecode.val()) 
+                {
+                    var errorMsg = 'Name Search requires Group Name and State';
+                    $("[id$='pbsearch']").prepend('<div class="pbError">Error: Invalid Data. <br/>' + errorMsg + '</div>');
+                    $groupname.addClass("error").parent().append(); 
+                    ValidationResult = false;
+                              
+                }                
+          if(!$groupId.val() && !$groupname.val() && !$statecode.val()) 
+                {   
+                    var errorMsg = 'ID or Name Search is Required';  
+                    $("[id$='pbsearch']").prepend('<div class="pbError">Error: Invalid Data. <br/>' + errorMsg + '</div>');
+              //      $groupname.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+              //      $groupId.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+                    ValidationResult = false;
+                }
+                if(ValidationResult == true){
+                stSearch();
+                return true;
+            }            
+    
+     //       if(result){
+     //            stSearch();
+     //       } 
+            
+        return ValidationResult;
+   } 
+
+    </Script>
+        <apex:actionFunction name="toggleShowPlanBenefits"
+                           action="{!searchPlans}" 
+                           reRender="pbid,Test-panel"  oncomplete="init();"  
+                           status="refreshMemberStatus"/>    
+                          
+        <apex:actionFunction name="stSearch" action="{!search}" rerender="pbsearch,group-panel,plan-panel,Test-panel,pbid,bundleTable" status="refreshMemberStatus" oncomplete="navigateToSection('SearchButton');"/>
+        <apex:actionFunction name="searchPlans" action="{!searchPlans}" reRender="pbid,Test-panel,bundleTable" status="refreshMemberStatus" oncomplete="navigateToSection('GroupBundleLink');">
+            <apex:param name="searchGroupName" assignTo="{!searchGroupName}" value=""/>   
+        </apex:actionFunction>   
+        <apex:actionFunction name="clearResults" action="{!clear}" reRender="plan-panel,group-panel,Test-panel,bundleTable" /> 
+        <c:ACETInteractionHighlightsPanel InteractionAtt="{!wrapper.Interaction}"
+            SubjectAtt="{!wrapper.Subject}"
+            AdditionalInfoAtt="{!wrapper.AdditionalInfo}" html-auto-doc="auto"></c:ACETInteractionHighlightsPanel>
+        
+        <apex:sectionHeader title="Plan Benefits"/>
+        <c:ACETCaseActions attrCaseDataWrapper="{!wrapper}"
+            attrShowSaveAndCloseButton="false" attrShowSaveButton="true"
+            attrShowMisdirectButton="true" 
+            attrSourceOriginator="{!wrapper.SourceOriginator}"
+            attrInteractionId="{!wrapper.Interaction.Id}"
+            attrSubjectId="{!wrapper.Subject.Id}" 
+            attrCallTopic="Plan Benefits" />
+        <apex:pageBlock id="pbsearch">
+            <apex:pageblockSection columns="2">
+                <apex:pageBlockSectionItem dataStyle="width:20%">
+                    <apex:outputLabel value="Group ID"></apex:outputLabel>
+                    <apex:inputText id="PolicyNumber"  value="{!PolicyNumber}"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem dataStyle="width:20%">
+                    <apex:outputLabel value="Group Name"></apex:outputLabel>
+                    <apex:inputText value="{!groupName}" id="groupname1" onkeypress="return noenter(event)"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >                    
+                    <apex:outputLabel value=""></apex:outputLabel>                   
+                </apex:pageBlockSectionItem>
+                <!--  ------------------------------    -->
+                <apex:pageBlockSectionItem >
+                 <!--   <apex:outputLabel value="{!$Label.ACETProviderSearchStateLabel}"></apex:outputLabel>
+                    <c:ACETStateCode StateCodeContainerAtt="{!StateCode}"></c:ACETStateCode> -->
+                      <apex:outputLabel value="State"></apex:outputLabel>
+                        <apex:outputPanel layout="none">
+                            <apex:selectList id="searchstate" size="1" value="{!State}">
+                                <apex:selectOptions value="{!StateOptions}"></apex:selectOptions>
+                            </apex:selectList>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+
+<!--  ---------------------------------------  -->
+                
+            </apex:pageblockSection>
+            <apex:pageBlockButtons location="bottom">
+
+                    <apex:commandButton value="Search" action="{!search}" rerender="pbsearch,group-panel,plan-panel,Test-panel,pbid,bundleTable" status="refreshMemberStatus" id="searchBtn" onclick="return validateSearch();" />  <!--  onclick="return validate();"  onclick="validatePlanBenSearch();return false;"  -->
+                    <apex:commandButton id="btnClear" value="Clear" onclick="return clearForm();" reRender="frm,pbsearch,group-panel,Test-panel,gs1,bundleTable,pbid"  />
+            </apex:pageBlockButtons>
+            
+        </apex:pageBlock>
+        <apex:outputPanel id="plan-panel">
+            <apex:pageBlock title="Plan Information" id="pl1" >
+              <apex:pageBlockTable value="{!planInfoList}" var="pi">
+                    <apex:column headerValue="Plan ID">            
+                    <apex:outputLink id="planid" value="#" styleclass="keyFieldId"
+                            onClick="openBenefitDetailPage('{!pi.PlanId}','{!pi.administeredByName}','{!pi.ProductId}','{!pi.planTypeCode}','{!pi.timePeriodQualifier}','{!pi.gatedProductIndicator}','{!pi.pcpRequiredIndicator}','{!networkSchList}');">{!pi.PlanId}</apex:outputLink>
+                    </apex:column>              
+                    <apex:column headerValue="Product ID" value="{!pi.productId}" />
+                    <apex:column headerValue="Effective Date" value="{!pi.EffectiveDate}" />             
+                    <apex:column headerValue="Expiration Date" value="{!pi.ExpirationDate}" />
+                    <apex:column headerValue="Group Name" value="{!pi.GroupName}" />
+                  
+               <!-- <apex:column headerValue="Plan ID" value="{!pi.PlanId}" />  
+                    <apex:column headerValue="End Date" value="{!pi.EndDate}" />   
+                    <apex:column headerValue="Revision Date" value="{!pi.RevisionDate}" />
+                    <apex:outputLink id="policyNumber" value="#" styleclass="keyFieldId"
+                            onClick="openBenefitDetailPage('{!pi.PolicyNumber}', '{!pi.PlanId}');">{!pi.PolicyNumber}</apex:outputLink>
+                    </apex:column>-->
+                </apex:pageBlockTable>
+            </apex:pageBlock> 
+                    </apex:outputPanel>
+
+        <apex:outputPanel id="group-panel">
+            <div id="groupPlanSec">
+                <apex:pageBlock title="Group Search" id="gs1" rendered="{!GroupInfos != null}">
+    
+                    <apex:pageBlockTable value="{!GroupInfos}" var="group"
+                        columnsWidth="11.11%,11.11%,11.11%,11.11%,11.11%,11.11%,11.11%,11.11%,11.11%"
+                        columns="9" rendered="{!(GroupInfos.size > 0)}">  <!--   rendered="{!(GroupInfos != null)}"  -->
+                        <apex:column headerValue="Group Name">
+                            <apex:outputLink id="groupId1" value="#" onClick="searchPlans('{!group.groupId}');">{!group.groupName}</apex:outputLink>
+                        </apex:column>
+                        <apex:column headerValue="Status" value="{!group.status}"/>
+                        <apex:column headerValue="Renewal Date" value="{!group.renewalDate}"/>
+                        <apex:column headerValue="Group ID " value="{!group.groupId}"/>
+                        <apex:column headerValue="Tax ID" value="{!group.taxid}"/>
+                        <apex:column headerValue="Address" value="{!group.addresses}"/>
+                        <apex:column headerValue="City" value="{!group.city}" />
+                        <apex:column headerValue="State" value="{!group.state}" />
+                        <apex:column headerValue="Zip Code" value="{!group.zipcode}" />
+                    <!--    <apex:column headerValue="Phone Number"
+                            value="{!group.phoneNumber}" /> -->
+                    </apex:pageBlockTable>
+                    
+                    <apex:outputText rendered="{!(GroupInfos.size == 0)}"><b>No groups found.</b></apex:outputText>
+                </apex:pageBlock>
+            </div>
+        </apex:outputPanel>
+        
+        
+        
+        
+     <apex:outputPanel id="Test-panel">
+        <div id="groupBundleSec">
+            <apex:pageBlock mode="detail" id="pbid" title="Group Bundles" rendered="{!GroupPlanBenefitResultsList != null}"  >
+                <apex:pageBlockSection id="groupPlan" columns="1" html-auto-doc="true" html-auto-doc-case-items="true">
+                    <apex:outputPanel id="showStatus">
+                        <apex:outputPanel rendered="{!IsShowActiveBenefitsOnly }">
+                            <input type="radio" name="showCoverage" value="Active"
+                                   checked="checked" style="vertical-align: middle"/>Active
+                            <input type="radio" name="showCoverage"
+                                   value="All" style="vertical-align: middle" onclick="callBundleService();"/>All
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!NOT(IsShowActiveBenefitsOnly )}">
+                            <input type="radio" name="showCoverage" value="Active"
+                                   style="vertical-align: middle" />Active
+                            <input type="radio" name="showCoverage"
+                                   value="All" checked="checked" style="vertical-align: middle" onclick="callBundleService();"/>All
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    <apex:outputpanel id="showerrormsg"/>       
+            
+        
+                <apex:pageblocktable value="{!GroupPlanBenefitResultsList}" var="plan" id="bundleTable" rendered="{!GroupPlanBenefitResultsList.size > 0}">
+                       <!--   <apex:column headerValue="Bundle ID" value="{!plan.bundleID}"></apex:column>    -->
+                        <apex:column >
+                            <apex:inputHidden id="clGUID" value="{!plan.GUID}" />
+                            <img
+                                src="{!URLFOR($Resource.ACETResources, '/img/m/' +plan.Image+'.jpg')}" />
+                        </apex:column>                    
+                        <apex:column >
+                            <apex:facet name="header">
+                                <apex:commandLink value="Bundle ID"  />
+                            </apex:facet>
+                       <!--      <apex:outputLink id="policyLink" value="#"
+                                             html-data-bundleID="{!plan.bundleID}">{!plan.bundleID}</apex:outputLink>    -->
+                           <apex:commandLink id="policyLink" value=" " styleclass="keyfieldId"
+                                onClick="return openBundleDetailPage('{!plan.bundleID}');">{!plan.bundleID}</apex:commandLink>                                         
+                        </apex:column>                  
+                         <apex:column headerValue="Plan ID" value="{!plan.PlanID}"></apex:column>
+                         <apex:column headerValue="Plan Class/Carve Out" value="{!plan.PlanClass}"></apex:column>
+                         <apex:column headerValue="Product" value="{!plan.Product}"></apex:column>
+                         <apex:column headerValue="Gated" value="{!plan.Gated}"></apex:column>
+                         <apex:column headerValue="PCP" value="{!plan.PCPRequired}"></apex:column>
+                         <apex:column headerValue="Accumulator" value="{!plan.Accumulator}"></apex:column>
+                         <apex:column headerValue="Metallic Level" value="{!plan.PlanMettalicLevel}"></apex:column>
+                         <apex:column headerValue="Network" value="{!plan.Network}"></apex:column>
+                         <apex:column headerValue="Effective Date" value="{!plan.effecDate}"></apex:column>
+                         <apex:column headerValue="End Date" value="{!plan.endDate}"></apex:column>
+                </apex:pageblocktable>
+                <apex:outputText rendered="{!GroupPlanBenefitResultsList.size == 0}"><b>No records found.</b></apex:outputText>
+            </apex:pageBlockSection> 
+        </Apex:PageBlock>  
+    </div> 
+</apex:outputPanel>
+        <input type="hidden" id="autoDocHidden"/> 
+        
+        <c:ACETCaseActions attrCaseDataWrapper="{!wrapper}"
+            attrShowSaveAndCloseButton="false" attrShowSaveButton="true"
+            attrShowMisdirectButton="true" 
+            attrSourceOriginator="{!wrapper.SourceOriginator}"
+            attrInteractionId="{!wrapper.Interaction.Id}"
+            attrSubjectId="{!wrapper.Subject.Id}" attrCallTopic="Plan Benefits" 
+            attrLocation="bottom"/>
+        
+
+    
+    <!-- do not display the date picker as it is the first focused element -->
+    <script>function setFocusOnLoad(){}</script>
+
+    <script>
+         var vccdParams;
+         var subtabIds = new Array();
+         var plaanid = 0;
+         var policyAray = new Array();
+         //added by swetha
+         $(document).ready(function(){
+            acet.autodoc.startAutodoc();
+            acet.autodoc.createCommentsbox();
+            init();
+            acet.autodoc.subTabIds = []; 
+           
+
+            var subjectId = '{!wrapper.Subject}';
+            acet.autodoc.getAutodocFromSubTabs = function(){
+                acet.autodoc.additionalInfo = '';
+                sforce.console.fireEvent('RequestBenefitDetail_'.concat(subjectId), subjectId);                   
+            };
+                       
+ 
+            sforce.console.addEventListener('ReceiveBenefitDetail_'.concat(subjectId), function(r){                   
+                var res = JSON.parse(r.message);     
+                policyAray.push(res.test); 
+                acet.autodoc.subTabIds.push(res.subTabId);
+                if(res.doc){
+                var spaceSeperator = '<div id="seperator" style="width:100%;height:50px;"></div>';    
+                    // alert('test******' + acet.autodoc.additionalInfo + spaceSeperator + res.doc);
+                acet.autodoc.additionalInfo = acet.autodoc.additionalInfo + spaceSeperator + res.doc;   
+                    }
+               sforce.console.closeTab(res.subTabId);
+                                    
+            }); 
+            
+            //sync comments between benefit search and benefit details tabs
+            //only fire at last keyup
+            var timer;
+            $("#autodocComments").keyup(function(){
+                clearTimeout(timer);  
+                timer = setTimeout(function(){
+                    sforce.console.fireEvent('BenefitCommentsUpdated_'.concat(subjectId), $("#autodocComments").val()); 
+                }, 500);   
+            }); 
+        
+            sforce.console.addEventListener('BenefitCommentsUpdated_'.concat(subjectId), function(r){
+                $("#autodocComments").val(r.message);                
+            }); 
+        
+            //send comments to detail page when requested
+            sforce.console.addEventListener('RequestBenefitComments_'.concat(subjectId), function(r){
+                sforce.console.fireEvent('BenefitCommentsUpdated_'.concat(subjectId), $("#autodocComments").val());                   
+            });             
+            
+            
+            //close all sub tabs
+            acet.autodoc.closeSubTabs = function(){
+                sforce.console.fireEvent('CloseBenefitDetailSubTab_'.concat(subjectId), subjectId);    
+            }            
+                                 
+                                   
+        });
+        
+        function init(){
+            $("input[type='radio'][name='showCoverage']").on("change", function(){
+                 
+                toggleShowPlanBenefits();
+                
+            });        
+        }
+              
+         
+         $(document).ready(function(){
+
+            var vccdparamsStr =  '{!$CurrentPage.parameters.vccdParams}';
+            if(vccdparamsStr){
+                vccdParams =  JSON.parse(vccdparamsStr);
+                $("[id$='PolicyNumber']").val(vccdParams.PolicyNumber); 
+            } 
+            
+            $("#autodocComments").keyup(function(){
+            }); 
+           
+            $("[id$='autodocComments']").on('click', function(){ 
+            });
+            
+             //added by Ranjit : work in progress
+             $("[id$='btnSaveNClose']").on('click', function(){                  
+                   closeSubtabs();
+             });
+             $("[id$='btnSaveCase']").on('click', function(){                  
+                   closeSubtabs();
+             }); 
+             $("[id$='btnMisdirectCase']").on('click', function(){                  
+                 closeSubtabs();
+             });
+                        
+         });
+          
+         $(document).ready(function() {
+         var noAutoSearch = '{!JSENCODE($CurrentPage.parameters.noAutoSearch)}'; 
+         if(noAutoSearch != 'true'){
+             var vccdParamsStr = '{!$CurrentPage.parameters.vccdParams}';
+             if(vccdParamsStr){
+                 var vccdParams =  JSON.parse(vccdParamsStr);
+                 $("[id$='PolicyNumber']").val(vccdParams.PolicyNumber); 
+                               
+                 $("[id$='Search']").click();
+             }
+         }
+     });  
+ 
+         $("[id$='PolicyNumber']").on("keyup", function(){
+               if(!$(this).val()){
+               }
+           });
+           
+         $("[id$='groupname']").on("keyup", function(){
+               if(!$(this).val()){
+               }
+           });
+                
+        function isValidDate(dateStr) {
+            var datePat = /^(\d{1,2})(\/|-)(\d{1,2})\2(\d{2}|\d{4})$/;
+            var matchArray = dateStr.match(datePat);
+            if (matchArray == null) {
+                return false;
+            }
+            month = matchArray[1]; // parse date into variables
+            day = matchArray[3];
+            year = matchArray[4];
+            if (month < 1 || month > 12) { // check month range
+                return false;
+            }
+            if (day < 1 || day > 31) {
+                return false;
+            }
+            if ((month==4 || month==6 || month==9 || month==11) && day==31) {
+                return false
+            }
+            if (month == 2) { // check for february 29th
+            var isleap = (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+            if (day>29 || (day==29 && !isleap)) {
+                return false;
+               }
+            }
+            return true;  // date is valid
+        }
+        // Function to Cancel Call topic//
+    function Misdirect(){ 
+            var url = 'interactionId={!JSENCODE($CurrentPage.parameters.interactionId)}';
+            url +='&contactId={!JSENCODE($CurrentPage.parameters.contactId)}';
+            url +='&callTopic=Plan Bnenefits';
+            url +='&originatorRelationship={!JSENCODE(wrapper.AdditionalInfo.OriginatorRelationship)}';
+            sforce.console.getFocusedPrimaryTabId(function(result){
+                url = 'apex/ACETMemberOpenTopicMisdirect?'+url; 
+                sforce.console.openSubtab(result.id , url, true,'Cancel', null);
+                });
+            return false;
+        }
+        //Added by Ranjit : Work in Progress 
+        //Start of code
+        //Function to track the number of subtabs opened from the current page
+        var openedTabs = function openedTabs(result) {
+            //Report whether we succeeded in opening the subtab
+            if (result.success) {
+                subtabIds.push(result.id);
+            } else {
+            }
+        };
+         
+        //Function to close all subtabs
+        function closeSubtabs(){
+            for(i = 0 ; i < subtabIds.length ; i++){
+                sforce.console.closeTab(subtabIds[i]);
+            }
+        }
+        //end of code
+        
+    function openBundleDetailPage(PolicyNumber){
+        
+        var tabName = 'Bundle' + ' - ' + PolicyNumber;    // InteractionId={!JSENCODE(InteractionId)}  
+        var interactionId = '{!JSENCODE(InteractionId)}'; 
+        var subjectId = '{!JSENCODE(wrapper.Subject.Id)}';
+       
+        var url = '/apex/ACETGroupPlanBenefitDetail?policyNo=' + PolicyNumber + '&InteractionId=' + interactionId + '&contactId=' + subjectId;
+        //alert('url :: ' + url);
+        sforce.console.getFocusedPrimaryTabId(function(result) {
+            sforce.console.openSubtab(result.id, url, true, tabName, null, openedTabs);
+        });    
+        return false;     
+    }        
+    function openBenefitDetailPage(PlanId, PlanName, ProductId, PlanType, Accumulator, Gated, PCP, Network){
+            console.log('Network :: ' + Network);
+                 var callTopicDataWrapperStr = '{!JSENCODE(wrapper.CallTopicDataWrapperStr)}';
+                 var commentBox = $('#autoDocHidden').val();
+                 
+                 var interactionId = '{!JSENCODE(wrapper.Interaction.Id)}';
+                 var subjectId = '{!JSENCODE(wrapper.Subject.Id)}';
+                 var additionalInfoStr = '{!JSENCODE(hpAdditionInfoStr)}';      
+                 var urlParam = '&bundleOptionId={!bundleOptionId}&SRK={!surrogateKey}';
+                 console.log('bundleOptionId:: {!bundleOptionId}' + ' ::surrogateKey:: {!surrogateKey}');
+                 var url = '/apex/ACETPlanBenefitDetail?PI=' + PlanId + '&PName=' + PlanName + '&PId='+ ProductId +'&PT=' + PlanType + '&Accum=' + Accumulator + '&Gat=' + Gated + '&PCP=' + PCP + '&Net=' + Network + '&interactionId=' + interactionId + '&contactId=' +subjectId + '&additionalInfo='+additionalInfoStr;
+                 sforce.console.getEnclosingPrimaryTabId(function(result){    
+                     sforce.console.openSubtab(result.id, url, true, 'Plan Benefits Detail', null, openedTabs);
+                 });
+                 return false;                   
+    }
+          
+    
+     function noenter(ev)  {
+        if (window.event && window.event.keyCode == 13 || ev.which == 13) {
+            doSearchAF();
+            return false;
+         } else {
+              return true;
+         }
+     }
+     
+
+    
+        
+    </script>
+    </apex:form>
+</apex:page>

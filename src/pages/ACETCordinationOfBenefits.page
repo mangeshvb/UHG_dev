@@ -1,0 +1,226 @@
+<apex:page controller="ACETCobController" sidebar="False"
+	tabStyle="Coordination_of_Benefits__tab"
+	title="Cordination Of Benefits" id="COBPage">
+	<apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+	<apex:stylesheet value="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+	<apex:includeScript value="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></apex:includeScript>
+	<script type="text/javascript"
+		src="https://js-cdn.dynatrace.com/jstag/145e12d594f/xob29014/1077eb28288ea333_bs.js"
+		crossorigin="anonymous"></script>
+	<apex:form id="COBForm">
+		<c:ACETInteractionHighlightsPanel InteractionAtt="{!Interaction}"
+			SubjectAtt="{!Subject}" AdditionalInfoAtt="{!AdditionalInfo}"
+			html-auto-doc="auto"></c:ACETInteractionHighlightsPanel>
+		<apex:outputPanel rendered="{!!isCancelCaseCreation}">
+			<apex:sectionHeader title="Coordination of Benefits" />
+			<c:ACETCaseActions attrCaseDataWrapper="{!wrapper}"
+				attrShowSaveAndCloseButton="false" attrShowSaveButton="true"
+				attrShowMisdirectButton="true"
+				attrSourceOriginator="{!wrapper.SourceOriginator}"
+				attrInteractionId="{!wrapper.Interaction.Id}"
+				attrSubjectId="{!wrapper.Subject.Id}"
+				attrCallTopic="Coordination Of Benefits" />
+			<apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+			<apex:includeScript value="{!$Resource.JqueryTableSorter}"></apex:includeScript>
+			<apex:includeScript value="/soap/ajax/30.0/connection.js" />
+			<apex:includeScript value="/support/console/30.0/integration.js" />
+			<script type='text/javascript'>
+        function getUrlVars()        
+        {            
+            var vars = [], hash;            
+            var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');            
+            for(var i = 0; i < hashes.length; i++)                
+            {                
+                hash = hashes[i].split('=');                
+                vars.push(hash[0]);                
+                vars[hash[0]] = hash[1];                
+            }            
+            return vars;            
+        }        
+        var childId = Math.floor((Math.random() * 500) + 1);        
+        var listener = function (result)        
+        {            
+            var jsonstr = result.message; 
+           setTimeout(function(){
+               childjsonfunction(jsonstr);
+           },3000);       
+        };        
+        sforce.console.addEventListener('ParentDataResponse_'.concat(childId), listener);        
+        var parentId = getUrlVars()["parentId"];        
+        sforce.console.fireEvent('RequestParentData_'.concat(parentId), childId);        
+        </script>
+<style>
+#popupDiv {
+	background: #ffffff; /*BG color is a must for IE6*/
+	text-decoration: none;
+	width: 15%;
+	height: 70px;
+	display: none;
+	position: absolute;
+	top: 80px;
+	left: 30px;
+	border: solid 1px #ccc;
+	padding-left: 20px;
+}
+</style>
+			<apex:actionFunction name="childjsonfunction"
+				action="{!childconsolefunction}" status="status1"
+				reRender="status1,Medicarepageblock,maindetailPageBlock,CommercialPageBlock"
+				oncomplete="initCommercialTableSorter();initMedicareTableSorter();acet.autodoc.startAutodoc();acet.autodoc.createCommentsbox();">
+				<apex:param value="" name="param1" />
+			</apex:actionFunction>
+			<apex:actionStatus id="status1">
+				<apex:facet name="start">
+					<center></center>
+				</apex:facet>
+				<apex:facet name="stop"></apex:facet>
+			</apex:actionStatus>
+			<apex:pageBlock mode="maindetail" id="maindetailPageBlock">
+				<apex:pageBlocksection title="Other Commercial Insurance"
+					id="CommercialPageBlock" columns="1" html-auto-doc="true"
+					html-auto-doc-case-items="true">
+					<!-- <apex:commandButton action="{!updateCommercial}" rerender="maindetailPageBlock" value="Update" oncomplete="alert('{!showUpdateSection}');"/> -->
+					<apex:pageBlockTable value="{!commercialcobList}" var="com"
+						title="Commercial" id="CommercialTable">
+						<!--<apex:column headerValue="Name" value="{!com.comName}" onmouseout="hidePopup()" onmouseover="showPopup('{!com.comRelationship}','{!com.comDob}','{!com.comAge}')"/>-->
+						<apex:column headerValue="Name" value="{!com.Name}" />
+						<apex:column headerValue="Relationship"
+							value="{!com.Relationship}" />
+						<apex:column headerValue="Date of Birth"
+							value="{!com.DateOfBirth}" />
+						<!-- mapping is yet to be done -->
+						<apex:column headerValue="Age" value="{!com.Age}" />
+						<!-- <apex:column headerValue="Member has Other Insurance?"/> -->
+						<apex:column headerValue="Insurance Type"
+							value="{!com.InsuranceType}" />
+						<!-- <apex:column headerValue="Is Other Insurance Primary?" value="{!com.IsOtherInsurancePrimary}"/> -->
+						<apex:column headerValue="Coverage Type"
+							value="{!com.COBTypeDesc}" />
+						<!-- mapping is yet to be done -->
+						<apex:column headerValue="Order of Benefits"
+							value="{!com.OrderOfBenefit}" />
+						<!-- mapping is yet to be done -->
+						<apex:column headerValue="Start">
+							<apex:outputText value="{0,date,MM/dd/yyyy}" id="Startdt">
+								<apex:param value="{!com.Startdt}" />
+							</apex:outputText>
+						</apex:column>
+						<apex:column headerValue="End">
+							<apex:outputText value="{0,date,MM/dd/yyyy}" id="Enddt">
+								<apex:param value="{!com.Enddt}" />
+							</apex:outputText>
+						</apex:column>
+						<apex:column headerValue="Custodial Parent" />
+						<apex:column headerValue="Last Update">
+							<apex:outputText value="{0,date,MM/dd/yyyy}" id="LastUpdate">
+								<apex:param value="{!com.LastUpdate}" />
+							</apex:outputText>
+						</apex:column>
+						<apex:column headerValue="Source" />
+					</apex:pageBlockTable>
+					<!--- add by sumit -->
+					<apex:outputpanel rendered="{!showUpdateSection}" id="updsec">
+						<apex:pageblockSection title="Update Details">
+							<b>Does other Primary Insurance exist?</b>
+							<input type="radio" onclick="satisfactionComment" name="yes"
+								value="Yes">Yes</input>
+							<input type="radio" onclick="satisfactionComment" name="no"
+								value="No">No</input>
+							<br />
+							<apex:selectList id="chooseComm" value="{!selectCommericial}"
+								size="1">
+								<apex:selectOption itemValue="Data1" itemLabel="Data 1" />
+								<apex:selectOption itemValue="Data2" itemLabel="Data 2" />
+								<apex:selectOption itemValue="Data3" itemLabel="Data 3" />
+							</apex:selectList>
+							<apex:inputfield value="{!caseEffectiveDate.tst_Date_Field__c}"
+								label="Effective date Field" />
+							<b>Custodial Parents </b>
+							<apex:selectList value="{!custodialSelect}" size="1">
+								<apex:selectOption itemValue="" itemLabel="Choose a value" />
+								<b>End Date </b>
+								<apex:inputfield value="{!caseEndDate.tst_Date_Field__c}" />
+								<b>Does other Primary Insurance exist?</b>
+								<apex:selectOption itemValue="" itemLabel="Choose a value" />
+							</apex:selectList>
+						</apex:pageblockSection>
+					</apex:outputpanel>
+					</apex:pageblocksection>
+					<div id="popupDiv">
+						<!-- apex:pageBlock id="popup" -->
+						<apex:pageBlockSection id="popupsec" columns="1">
+							<apex:outputText id="Relationship" value="" label="Relationship" />
+							<apex:outputText id="dob" value="" label="Date Of Birth" />
+							<apex:outputText id="age" value="" label="Age" />
+						</apex:pageBlockSection>
+						<!-- /apex:pageBlock -->
+					</div>
+					<apex:pageBlocksection title="Government" id="Medicarepageblock"
+						columns="1" html-auto-doc="true" html-auto-doc-case-items="true">
+						<apex:pageBlockTable value="{!governmentcobList}" var="md"
+							title="medicare" id="medicare">
+							<apex:column headerValue="Name" value="{!md.Name}" />
+							<apex:column headerValue="Relationship"
+								value="{!md.Relationship}" />
+							<apex:column headerValue="Date of Birth"
+								value="{!md.DateOfBirth}" />
+							<apex:column headerValue="Age" value="{!md.Age}" />
+							<apex:column headerValue="Benefit Type" value="{!md.BenefitType}"/>
+							<!-- apex:column headerValue="Is Medicare Primary?"
+                                value="{!md.IsMedicarePrimary}" / --->
+							<apex:column headerValue="Order of Benefits"
+								value="{!md.OrderOfBenefit}" />
+							<apex:column headerValue="Start">
+								<apex:outputText value="{0,date,MM/dd/yyyy}" id="PartAStartdt">
+									<apex:param value="{!md.Startdt}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="End">
+								<apex:outputText value="{0,date,MM/dd/yyyy}" id="PartAEnddt">
+									<apex:param value="{!md.Enddt}" />
+								</apex:outputText>
+							</apex:column>
+							<apex:column headerValue="Crossover Indicator" />
+							<apex:column headerValue="Entitlement Reason"
+								value="{!md.EntitlementReason}" />
+						</apex:pageBlockTable>
+						</apex:pageblocksection>
+			</apex:pageBlock>
+		</apex:outputPanel>
+		<c:ACETCaseActions attrCaseDataWrapper="{!wrapper}"
+			attrShowSaveAndCloseButton="false" attrShowSaveButton="true"
+			attrShowMisdirectButton="true"
+			attrSourceOriginator="{!wrapper.SourceOriginator}"
+			attrInteractionId="{!wrapper.Interaction.Id}"
+			attrSubjectId="{!wrapper.Subject.Id}"
+			attrCallTopic="Coordination Of Benefits" attrLocation="bottom" />
+	</apex:form>
+	<script>
+ var initCommercialTableSorter = function(){
+        $("table[id*='CommercialTable']").tablesorter();
+    };    
+  var initMedicareTableSorter = function(){
+       $("table[id*='Medicare']").tablesorter();
+  };  
+  function validate(){
+      acet.autodoc.saveAutodoc();
+      return true;
+  }   
+</script>
+	<style type="text/css">
+.imgclass:hover {
+	background-image: url('/img/help/helpOrbs.gif');
+	background-repeat: no-repeat;
+	width: 16px;
+	height: 15px;
+	background-position: right;
+}
+.imgclass {
+	background-image: url('/img/help/helpOrbs.gif');
+	background-repeat: no-repeat;
+	width: 16px;
+	height: 15px;
+}
+</style>
+	<apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/main.js')}" />
+</apex:page>

@@ -1,0 +1,207 @@
+<apex:page controller="ACETMemberNotFoundController" sidebar="false"
+    tabStyle="Member_Search__tab" docType="html-5.0">
+    <apex:includeScript value="/support/console/37.0/integration.js" />
+    <apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+    <apex:sectionHeader title="Enter Member Information" />
+    <apex:form >
+        <apex:pageMessages id="pmMessages" />
+        <apex:pageBlock Id="pbMemberNotFound">
+            <apex:pageblockSection columns="2">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Employer Name "></apex:outputLabel>
+                   <apex:inputText value="{!EmployerName}" id="employerName" maxlength="10" /> 
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Group Number "></apex:outputLabel>
+                  <apex:inputText value="{!GroupNumber}" id="groupNumber" maxlength="10" />   
+                </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="First Name"></apex:outputLabel>
+                    <apex:outputPanel >
+                        <div class="requiredInput">
+                            <div class="requiredBlock" />
+                            <apex:inputText value="{!firstName}" id="firstName"
+                                maxlength="40" />
+                        </div>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Last Name"></apex:outputLabel>
+                    <apex:outputPanel >
+                        <div class="requiredInput">
+                            <div class="requiredBlock" />
+                            <apex:inputText value="{!lastName}" id="lastName" maxlength="80" />
+                        </div>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Date Of Birth"></apex:outputLabel>
+                    <apex:inputField value="{!StartDate.tst_Date_Field__c}" id="dateOfBirth"  /> 
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Zip Code"></apex:outputLabel>
+                    <apex:inputtext value="{!zipcode}" id="zipcode" maxlength="5" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="State"></apex:outputLabel>
+                        <apex:outputPanel layout="none">
+                            <c:ACETState ></c:ACETState>
+                            <!-- to pass value back when the input is disabled in form -->                            
+                            <apex:inputHidden id="stateHidden" value="{!State}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Phone Number"></apex:outputLabel>
+                    <apex:outputPanel >
+                        <div class="requiredInput">
+                            <div class="requiredBlock" />
+                            <apex:inputText value="{!PhoneNumber }" id="phoneNumber" maxlength="10" />
+                        </div>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+            </apex:pageblockSection>
+            <apex:pageBlockButtons location="bottom" style="align:center;">            
+                <apex:commandButton value="Submit" action="{!RedirectFromMemberNotFound}" onClick="return validate();" />
+                <apex:commandButton value="Cancel" onClick=" testCloseTab();" />
+            </apex:pageBlockButtons>
+            
+        </apex:pageBlock>
+    </apex:form>
+    <script type="text/javascript">
+    var j$ = jQuery.noConflict(); 
+            var $MemberNotFound = j$("[id$='pbMemberNotFound']");
+            var $firstName = j$("[id$='firstName']");
+            var $lastName = j$("[id$='lastName']");
+            var $dateOfBirth = j$("[id$='dateOfBirth']");
+            var $zipcode = j$("[id$='zipcode']");
+            var $phoneNumber = j$("[id$='phoneNumber']");
+            var $employerName = j$("[id$='employerName']");
+            var $groupNumber = j$("[id$='groupNumber']");
+            var $state = j$("[id$='state']");
+            
+    function validate(){   
+            $MemberNotFound.find(".pbError").remove();
+            $firstName.removeClass("error").parent().find(".errorMsg").remove();
+            $lastName.removeClass("error").parent().find(".errorMsg").remove();
+            $dateOfBirth.removeClass("error").parent().find(".errorMsg").remove();
+            $zipcode.removeClass("error").parent().find(".errorMsg").remove();
+            $phoneNumber.removeClass("error").parent().find(".errorMsg").remove();
+            $employerName.removeClass("error").parent().find(".errorMsg").remove();
+            $groupNumber.removeClass("error").parent().find(".errorMsg").remove();
+            $state.removeClass("error").parent().find(".errorMsg").remove();            
+            var result = true;            
+            
+        if($dateOfBirth.val()){
+                if(!isValidDate($dateOfBirth.val())){
+                    var errorMsg = "Invalid Date";
+                    $dateOfBirth.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+                    result = false;
+                }
+            }
+        if($zipcode.val()) {
+         if($zipcode.val().length < 5) {                   
+              var errorMsg = "Enter a valid 5 digit Zip Code";
+              $zipcode.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+             result = false;
+         }
+        }
+        if($phoneNumber.val()) {
+         if($phoneNumber.val().length < 10) {                 
+              var errorMsg = "Enter a valid 10 digit number";
+              $phoneNumber.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+             result = false;
+         }
+        }
+        if(!$phoneNumber.val()) {
+         var errorMsg = "You must enter a value";
+         $phoneNumber.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+         result = false;
+        }
+        if(!$lastName.val()) {
+         var errorMsg = "You must enter a value";
+         $lastName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+         result= false;  
+        }
+        if(!$firstName.val()) {
+                var errorMsg = "You must enter a value";
+                $firstName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');          
+                result = false;
+        }
+        if (!result)
+        {        
+         $MemberNotFound.prepend('<div class="pbError">{!$Label.ACETMemberSearchInvalidDataErrorMessage}<br/>{!$Label.ACETMemberSearchReviewErrorMessage}</div>');
+        }
+        return result;    
+    }
+    
+ function isValidDate(dateStr) {
+            var datePat = /^(\d{1,2})(\/|-)(\d{1,2})\2(\d{2}|\d{4})$/;
+            var matchArray = dateStr.match(datePat);
+            if (matchArray == null) {
+                return false;
+            }
+            month = matchArray[1]; // parse date into variables
+            day = matchArray[3];
+            year = matchArray[4];
+            if (month < 1 || month > 12) { // check month range
+                return false;
+            }
+            if (day < 1 || day > 31) {
+                return false;
+            }
+            if ((month==4 || month==6 || month==9 || month==11) && day==31) {
+                return false
+            }
+            if (month == 2) { // check for february 29th
+            var isleap = (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+            if (day>29 || (day==29 && !isleap)) {
+                return false;
+               }
+            }
+            return true;  // date is valid
+        }
+
+    
+  function init()
+    {
+        $phoneNumber.keypress(AllowDigitsOnly); 
+        $zipcode.keypress(AllowDigitsOnly); 
+          
+    }
+    
+    function AllowDigitsOnly(InputElement) 
+    {
+        //Allow delete, tab, enter and escape keys through
+        if (/^(8|9|13|27)$/.test("" + InputElement.keyCode)) 
+        {
+            return true;
+        }
+        
+        var regex = new RegExp("^[0-9]+$");
+        var str = String.fromCharCode(!InputElement.charCode ? InputElement.which : InputElement.charCode);
+        if (regex.test(str)) 
+        {
+            return true;
+        }
+        
+        InputElement.preventDefault();
+        return false;
+    }
+    
+    
+    j$(document).ready(function() {          
+        init();
+        
+    });        
+    
+    function testCloseTab() {
+        sforce.console.getEnclosingTabId(closeSubtab);
+    }
+    
+    var closeSubtab = function closeSubtab(result) {
+        //Now that we have the tab ID, we can close it
+        var tabId = result.id;
+        sforce.console.closeTab(tabId);
+    };
+    </script>
+</apex:page>

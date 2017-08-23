@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Material Forms</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Material Forms</value>
+    </caseValues>
+    <fields>
+        <label><!-- Business Unit --></label>
+        <name>Business_Unit__c</name>
+        <picklistValues>
+            <masterLabel>Group</masterLabel>
+            <translation><!-- Group --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Member</masterLabel>
+            <translation><!-- Member --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Producer</masterLabel>
+            <translation><!-- Producer --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Provider</masterLabel>
+            <translation><!-- Provider --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <label><!-- Category --></label>
+        <name>Category__c</name>
+    </fields>
+    <fields>
+        <label><!-- Document Title --></label>
+        <name>Document_Title__c</name>
+    </fields>
+    <fields>
+        <label><!-- Document URL --></label>
+        <name>Document_URL__c</name>
+    </fields>
+    <fields>
+        <label><!-- FulfillmentType Description --></label>
+        <name>FulfillmentType_Description__c</name>
+    </fields>
+    <fields>
+        <label><!-- FulfillmentType --></label>
+        <name>FulfillmentType__c</name>
+    </fields>
+    <fields>
+        <label><!-- MRE# --></label>
+        <name>MRE__c</name>
+    </fields>
+    <fields>
+        <label><!-- Original Request Source ID --></label>
+        <name>Original_Request_Source_ID__c</name>
+    </fields>
+    <fields>
+        <label><!-- Quantity --></label>
+        <name>Quantity__c</name>
+    </fields>
+    <startsWith>Consonant</startsWith>
+</CustomObjectTranslation>

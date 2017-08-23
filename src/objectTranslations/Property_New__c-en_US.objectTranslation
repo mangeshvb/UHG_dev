@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Property New</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Properties_New</value>
+    </caseValues>
+    <fields>
+        <label><!-- Address --></label>
+        <name>Address__c</name>
+    </fields>
+    <fields>
+        <label><!-- City --></label>
+        <name>City__c</name>
+    </fields>
+    <fields>
+        <label><!-- Date Listed --></label>
+        <name>Date_Listed__c</name>
+    </fields>
+    <fields>
+        <label><!-- No of days in Market --></label>
+        <name>No_of_days_in_Market__c</name>
+    </fields>
+    <fields>
+        <label><!-- Price --></label>
+        <name>Price__c</name>
+    </fields>
+    <fields>
+        <label><!-- State --></label>
+        <name>State__c</name>
+    </fields>
+    <fields>
+        <label><!-- Type --></label>
+        <name>Type__c</name>
+        <picklistValues>
+            <masterLabel>Rentout</masterLabel>
+            <translation><!-- Rentout --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>TobeSold_New</masterLabel>
+            <translation><!-- TobeSold_New --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>TobeSold_Resale</masterLabel>
+            <translation><!-- TobeSold_Resale --></translation>
+        </picklistValues>
+    </fields>
+    <startsWith>Consonant</startsWith>
+</CustomObjectTranslation>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>ACETEligibilityCalculator</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>ACETEligibilityCalculator</value>
+    </caseValues>
+    <fields>
+        <label><!-- Active --></label>
+        <name>Active__c</name>
+    </fields>
+    <fields>
+        <label><!-- Calculation Days --></label>
+        <name>Calculation_Days__c</name>
+    </fields>
+    <fields>
+        <label><!-- Call Topic --></label>
+        <name>Call_Topic__c</name>
+    </fields>
+    <fields>
+        <label><!-- Call Type --></label>
+        <name>Call_Type__c</name>
+    </fields>
+    <fields>
+        <label><!-- IsValidRequiredFutureDate --></label>
+        <name>IsValidRequiredFutureDate__c</name>
+    </fields>
+    <fields>
+        <label><!-- Lag Required --></label>
+        <name>LagRequired__c</name>
+    </fields>
+    <fields>
+        <label><!-- Waiting Period Large Group --></label>
+        <name>Waiting_Period_Large_Group__c</name>
+    </fields>
+    <fields>
+        <label><!-- Waiting Period Small Group --></label>
+        <name>Waiting_Period_Small_Group__c</name>
+    </fields>
+    <startsWith>Consonant</startsWith>
+</CustomObjectTranslation>

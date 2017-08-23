@@ -1,0 +1,179 @@
+<apex:page controller="ACETCreateAuthorizationController"
+    sidebar="false">
+    <apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+    <apex:includeScript value="/support/console/30.0/integration.js" />
+    <apex:pageMessages />
+    <apex:form >
+        <apex:actionFunction name="updateWrapper" action="{!updateWrapper}"
+            reRender="temp" />
+        <c:ACETInteractionHighlightsPanel InteractionAtt="{!wrapper.Interaction}"
+            SubjectAtt="{!wrapper.Subject}"
+            AdditionalInfoAtt="{!wrapper.AdditionalInfo}" html-auto-doc="auto"></c:ACETInteractionHighlightsPanel>
+        <apex:sectionHeader title="Create Authorization" />
+        <c:ACETCaseActions attrCaseDataWrapper="{!wrapper}"
+            attrShowSaveAndCloseButton="true" attrShowSaveButton="true"
+            attrShowMisdirectButton="true" 
+            attrSourceOriginator="{!wrapper.SourceOriginator}"
+            attrInteractionId="{!wrapper.Interaction.Id}"
+            attrSubjectId="{!wrapper.Subject.Id}"
+            attrCallTopic="Create Authorization"/>
+        <apex:pageBlock >
+            <apex:pageBlockSection columns="1">
+                <apex:pageBlockSectionItem >
+                    <input type="button" id="launchCirrusBtn" style="margin-left: 34%;"
+                        value="Open Create Authorization" onclick="openCreateAuthorization('{!baseURL}');" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <!-- Below component Added by Divya - US564088 -->
+            <c:ACETDynamicCallTypesDisplay attrCaseDataWrapper="{!wrapper}" 
+                                           attrCallTopic="{!wrapper.caseobj.Topic__c}"
+                                           attrShowPickListcallTypes="true"
+                                           attrShowCheckBoxCallTypes="false"
+                                           attrshowAccountType="false"
+                                           attrShowPickListLabel="Authorization"/> 
+            <apex:pageBlockSection columns="1" html-auto-doc="auto">
+                <!-- <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Authorization"></apex:outputLabel>
+                    <apex:selectList id="topic" size="1" value="{!Topic}"
+                        onchange="updateWrapper();">
+                        <apex:selectOptions value="{!Topics}"></apex:selectOptions>
+                    </apex:selectList>
+                </apex:pageBlockSectionItem> -->
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Authorization Number"></apex:outputLabel>
+                    <apex:inputText id="authnumber" value="{!authNumber}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Comments"></apex:outputLabel>
+                    <apex:inputTextArea id="comments" cols="100" rows="5"
+                        value="{!wrapper.Comments}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="System Unavailable"></apex:outputLabel>
+                    <apex:inputCheckbox id="sysUnavailableChkb"
+                        style="margin-left:10px;" value="{!wrapper.isSystemUnavailable }" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+                <apex:pageBlockButtons location="bottom">
+                    <apex:commandButton value="Clear" onclick="return resetForm()" />
+                </apex:pageBlockButtons>
+        </apex:pageBlock>
+        <c:ACETCaseActions attrCaseDataWrapper="{!wrapper}"
+            attrShowSaveAndCloseButton="true" attrShowSaveButton="true"
+            attrShowMisdirectButton="true" 
+            attrSourceOriginator="{!wrapper.SourceOriginator}"
+            attrInteractionId="{!wrapper.Interaction.Id}"
+            attrSubjectId="{!wrapper.Subject.Id}"
+            attrCallTopic="View Consumer Dashboard" 
+            attrLocation="bottom" />
+    </apex:form>
+    <script>
+        $(document).ready(function() {                      
+            $("[id$='topic']").wrap('<div class="requiredInput"></div>').parent().prepend('<div class="requiredBlock"></div>');
+            $("[id$='topic']").change(function(){
+                if($(this).val() == 'Created'&& ! $("[id$='sysUnavailableChkb']").prop("checked")){
+                    $("[id$='authnumber']").wrap('<div class="requiredInput"></div>').parent().prepend('<div class="requiredBlock"></div>');
+                    $("[id$='authnumber']").removeAttr("disabled");
+                    $("[id$='comments']").parent().find(".errorMsg").remove();
+                    $("[id$='comments']").parent().find(".requiredBlock").remove();
+                    $("[id$='comments']").removeClass('error'); 
+                }
+                else{
+                    $("[id$='authnumber']").parent().find(".errorMsg").remove();
+                    $("[id$='authnumber']").parent().find(".requiredBlock").remove();
+                    $("[id$='authnumber']").removeClass('error');
+                    
+                    $("[id$='comments']").parent().find(".errorMsg").remove();
+                    $("[id$='comments']").parent().find(".requiredBlock").remove();
+                    $("[id$='comments']").removeClass('error'); 
+                    if($(this).val() == 'Not Created' && ! $("[id$='sysUnavailableChkb']").prop("checked")){
+                        $("[id$='authnumber']").val("");
+                        $("[id$='authnumber']").attr("disabled","true");
+                        $("[id$='comments']").wrap('<div class="requiredInput"></div>').parent().prepend('<div class="requiredBlock"></div>'); 
+                    }
+                }
+            });
+          
+            $("[id$='sysUnavailableChkb']").click(function(){
+                
+                if($(this).prop("checked")){
+                    $("[id$='topic']").parent().find(".errorMsg").remove();
+                    $("[id$='topic']").parent().find(".requiredBlock").remove();
+                    $("[id$='topic']").removeClass('error');
+                    
+                    $("[id$='authnumber']").parent().find(".errorMsg").remove();
+                    $("[id$='authnumber']").parent().find(".requiredBlock").remove();
+                    $("[id$='authnumber']").removeClass('error');
+                    
+                    $("[id$='comments']").parent().find(".errorMsg").remove();
+                    $("[id$='comments']").parent().find(".requiredBlock").remove();
+                    $("[id$='comments']").removeClass('error');
+                    
+                    $("[id$='authnumber']").removeAttr("disabled");  
+                }else{
+                    $("[id$='topic']").wrap('<div class="requiredInput"></div>').parent().prepend('<div class="requiredBlock"></div>');
+                    if($("[id$='topic']").val() == 'Created' ){ 
+                        $("[id$='authnumber']").wrap('<div class="requiredInput"></div>').parent().prepend('<div class="requiredBlock"></div>');
+                        $("[id$='authnumber']").removeAttr("disabled");     
+                    }
+                    if($("[id$='topic']").val() == 'Not Created' ){
+                        $("[id$='authnumber']").attr("disabled","true"); 
+                        $("[id$='comments']").wrap('<div class="requiredInput"></div>').parent().prepend('<div class="requiredBlock"></div>');     
+                    }
+                    
+               } 
+            });                        
+        });
+        function validate(){
+            var $topic = $("[id$='topic']");
+            var $authnumber =  $("[id$='authnumber']");
+            var $comments =  $("[id$='comments']");
+            var retFlag = true;
+            $topic.removeClass("error").parent().find(".errorMsg").remove();
+            $authnumber.removeClass("error").parent().find(".errorMsg").remove();
+            
+            if(!$topic.val() && ! $("[id$='sysUnavailableChkb']").prop("checked")){
+               var errorMsg = "You must enter a value."; 
+               $topic.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+               retFlag = false;                  
+            }
+            if(!$authnumber.val() && ! $("[id$='sysUnavailableChkb']").prop("checked") && $topic.val() == 'Created'){
+               var errorMsg = "You must enter a value."; 
+               $authnumber.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+               retFlag = false;                  
+            }
+            if(!$comments.val() && ! $("[id$='sysUnavailableChkb']").prop("checked") && $topic.val() == 'Not Created'){
+               var errorMsg = "You must enter a value."; 
+               $comments.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+               retFlag = false;                  
+            }
+            if(retFlag){
+                acet.autodoc.saveAutodoc();    
+            }    
+                              
+            return retFlag;                 
+        }
+        
+        function resetForm(){
+            //var $topic = $("[id$='topic']");
+            var $comments =  $("[id$='comments']");
+            //var $authnumber = $("[id$='authnumber']");
+            
+            //$topic.removeClass("error").parent().find(".errorMsg").remove();
+            $comments.removeClass("error").parent().find(".errorMsg").remove();
+            //$authnumber.removeClass("error").parent().find(".errorMsg").remove();
+            
+            //$topic.val("");
+            $comments.val("");
+            //$authnumber.val("");
+            
+            return false;
+        }
+    function openCreateAuthorization(baseLink){
+            console.log('baseLink'+baseLink);
+            window.open(baseLink,'_blank', 'toolbars=0, width=1200, height=800 ,left=0 ,top=0 ,scrollbars=1 ,resizable=1');  
+        } 
+             
+    </script>
+    <apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/main.js')}" />
+</apex:page>

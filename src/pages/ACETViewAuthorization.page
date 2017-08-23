@@ -1,0 +1,579 @@
+<apex:page Id="Pageid" sidebar="false" docType="html-5.0"
+    controller="ACETViewAuthorizationController"
+    action="{!CallFindAuthorizationWS}" tabStyle="contact">
+
+    <apex:includeScript value="{!$Resource.JQuery}" />
+    <apex:includeScript value="{!$Resource.JqueryTableSorter}"></apex:includeScript>
+    <apex:includeScript value="/support/console/30.0/integration.js" />
+    <apex:includeScript value="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></apex:includeScript>
+    <apex:stylesheet value="{!URLFOR($Resource.ACETResources, '/css/m/memberdetail.css')}" />
+    <apex:stylesheet value="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+    <style>
+.topics-label {
+    padding-top: 2px;
+    /* padding-right: 10px; */
+    padding-bottom: 2px;
+    /* padding-left: 2px; */
+    text-align: left;
+    /* font-size: 91%; */
+    font-weight: bold;
+    color: #333;
+}
+
+th {
+    /* text-align: left; */
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.bPageBlock .detailList .dataCol {
+    width: 100%;
+}
+
+.bPageBlock th.vfLabelColTextWrap {
+    white-space: normal;
+    /* position: relative; */
+}
+
+.detailList td {
+    /* vertical-align: top; */
+    
+}
+
+.errorMsg {
+    color: #c00;
+    margin-left: 2px;
+}
+.Required {
+    border: 2px solid #c00;
+}
+
+.autodoc {
+    vertical-align: middle;
+}
+</style>
+
+    <apex:form id="formid">
+        <c:ACETInteractionHighlightsPanel InteractionAtt="{!Interaction}"
+            SubjectAtt="{!Subject}" AdditionalInfoAtt="{!AdditionalInfo}"
+            html-auto-doc="auto"></c:ACETInteractionHighlightsPanel>
+        <apex:outputPanel rendered="{!isDetailPage}">
+            <apex:pageMessages id="pmMessages" />
+            <apex:sectionHeader subtitle="View  Authorizations" />
+            <c:ACETCaseActions attrCaseDataWrapper="{!wrapper}"
+                attrShowSaveAndCloseButton="false" attrShowSaveButton="true"
+                attrShowMisdirectButton="true" 
+                attrSourceOriginator="{!wrapper.SourceOriginator}"
+                attrInteractionId="{!wrapper.Interaction.Id}"
+                attrSubjectId="{!wrapper.Subject.Id}"
+                attrCallTopic="View Authorizations" /> 
+                
+            <apex:actionFunction name="ApplyFilterAF" action="{!ApplyFilter}"
+                rerender="opSearchResults" status="SearchStatus"
+                oncomplete="acet.autodoc.startAutodoc();" />
+            <apex:actionFunction name="ClearFilterAF" action="{!clearFilter}"
+                rerender="opSearchResults,opFilterSection " status="ClearStatus"
+                oncomplete="acet.autodoc.startAutodoc();" />
+            <apex:outputPanel id="opFilterSection">
+                <apex:pageblock mode="mainDetail" id="Block1">
+
+                    <apex:pageblockButtons location="bottom">
+                        <input id="btnApply" type="button" value="Apply Filters"
+                            class="btn" onclick="return validateF(this);" />
+                        <input id="btnClear" type="button" value="Clear" class="btn"
+                            onclick="return ClearSearchCriteria(this);" />
+                        <apex:actionStatus id="SearchStatus">
+                            <apex:facet name="start">
+
+                            </apex:facet>
+                        </apex:actionStatus>
+                        <apex:actionStatus id="ClearStatus">
+                            <apex:facet name="start">
+
+                            </apex:facet>
+                        </apex:actionStatus>
+
+
+                    </apex:pageblockButtons>
+
+                    <apex:pageblocksection title="Filters" columns="5"
+                        id="pbFilterSection">
+                        <apex:pageblocksectionitem dataStyle="width:15%;float:left;">
+                            <apex:outputLabel style="font-size:11px;text-align:left;">Authorization Number</apex:outputLabel>
+                            <apex:outputPanel >
+                                <div>
+                                    <apex:inputText id="AuthorizationNumber"
+                                        style="margin-left:3px" value="{!strAuthorizationNumber}" />
+                                    <div class="errorMsg" style="display: none;">
+                                        <b>Error:</b>
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:pageblocksectionitem>
+
+                        <apex:pageblocksectionItem dataStyle="width:15%;float:left;">
+                            <apex:outputLabel style="font-size:11px;text-align:left;">Authorization Type</apex:outputLabel>
+                            <apex:selectList size="1" id="AuthorizationType"
+                                value="{!AuthorizationType}">
+                                <apex:selectOption itemLabel="--None--" itemValue="----None----"></apex:selectOption>
+                                <apex:selectOption itemLabel="Inpatient" itemValue="Inpatient"></apex:selectOption>
+                                <apex:selectOption itemLabel="Outpatient Facility"
+                                    itemValue="Outpatient Facility"></apex:selectOption>
+                                <apex:selectOption itemLabel="Outpatient" itemValue="Outpatient"></apex:selectOption>
+                            </apex:selectList>
+                        </apex:pageblocksectionItem>
+
+                        <apex:pageblocksectionitem dataStyle="width:15%;float:left;">
+                            <apex:outputLabel style="font-size:11px;text-align:left;">Status</apex:outputLabel>
+                            <apex:selectList size="1" id="Status" value="{!strStatus}">
+                                <apex:selectOption itemLabel="--None--" itemValue="----None----"></apex:selectOption>
+                                <apex:selectOption itemLabel="Open" itemValue="Open"></apex:selectOption>
+                                <apex:selectOption itemLabel="Closed" itemValue="Closed"></apex:selectOption>
+                                <apex:selectOption itemLabel="Anticipated Admission"
+                                    itemValue="Anticipated Admission"></apex:selectOption>
+                                <apex:selectOption itemLabel="Cancelled" itemValue="Cancelled"></apex:selectOption>
+                                <apex:selectOption itemLabel="Incomplete" itemValue="Incomplete"></apex:selectOption>
+                                <apex:selectOption itemLabel="Discarded" itemValue="Discarded"></apex:selectOption>
+                            </apex:selectList>
+                        </apex:pageblocksectionitem>
+
+                        <apex:pageblocksectionitem id="StartDateSection">
+                            <apex:outputLabel style="font-size:11px;text-align:left;">Start Date</apex:outputLabel>
+                            <apex:outputPanel id="StartDatePanel">
+                                <apex:inputField id="StartDate"
+                                    value="{!StartDate.tst_Date_Field__c}" required="false" />
+                                <div class="errorMsg" style="display: none; margin-left: -4px;">
+                                    <b>Error:</b> Invalid Start Date 
+                                </div>
+
+                               </apex:outputPanel>
+                        </apex:pageblocksectionitem>
+
+                        <apex:pageblocksectionitem id="EndDateSection">
+                            <apex:outputLabel style="font-size:11px;text-align:left;">End Date</apex:outputLabel>
+                            <apex:outputPanel id="EndDatePanel">
+                                <apex:inputField id="EndDate"
+                                    value="{!EndDate.tst_Date_Field__c}" />
+                                <div class="errorMsg" style="display: none; margin-left: -4px;">
+                                    <b>Error:</b> Invalid End Date
+                                </div>
+                            </apex:outputPanel>
+                        </apex:pageblocksectionitem>
+
+                    </apex:pageblocksection>
+                </apex:pageblock>
+            </apex:outputPanel>
+
+            <apex:outputPanel id="opSearchResults">
+                <apex:pageblock mode="mainDetail" title="Authorization Results">
+                    <apex:pageblocksection title="Inpatient Cases" html-auto-doc="true" html-auto-doc-case-items="true">
+                        <apex:outputpanel rendered="{!IF(inPatientAuthorizedList.size>0,false,true)}">
+                            <p style="color: black; text-align: center;">No records found</p>
+                        </apex:outputpanel>
+                        <apex:pageblocktable value="{!inPatientAuthorizedList}"
+                            var="objAuthWrap" id="InpatientTable"
+                            rendered="{!IF(inPatientAuthorizedList.size>0,true,false)}">
+                            
+
+                            <apex:column headerValue="Authorization Number" styleclass="keyfieldId">
+                                <apex:outputLink value="#" styleclass="keyfieldId"
+                                    onclick="return AuthorizationNumber_OnClick('{!JSENCODE(objAuthWrap.Authorization_Number)}','{!JSENCODE(objAuthWrap.AuthID)}', '{!JSENCODE(objAuthWrap.Case_Type_Code)}', '{!JSENCODE(objAuthWrap.Case_Type_Desc)}','InpatientCases','{!JSENCODE(objAuthWrap.Case_Status)}','{!JSENCODE(objAuthWrap.Expected_Dscharg_Date)}','{!JSENCODE(objAuthWrap.Pre_Determination) }','{!JSENCODE(objAuthWrap.Expected_Admit_Date) }','{!JSENCODE(objAuthWrap.Actual_Admit_Date) }','{!JSENCODE(objAuthWrap.Actual_Dscharg_Date)}','{!JSENCODE(objAuthWrap.jsonString)}')">{!JSENCODE(objAuthWrap.Authorization_Number)}</apex:outputLink>
+                            </apex:column>
+                            <apex:column headerValue="Case Status"
+                                value="{!objAuthWrap.Case_Status}" />
+                            <apex:column headerValue="Pre Determination"
+                                value="{!objAuthWrap.Pre_Determination }"/>
+                            <apex:column headerValue="Create Date"
+                                value="{!objAuthWrap.Create_Date }" />
+                            <apex:column headerValue="Expected Admit Date"
+                                value="{!objAuthWrap.Expected_Admit_Date }" />
+                            <apex:column headerValue="Actual Admit Date"
+                                value="{!objAuthWrap.Actual_Admit_Date }" />
+                            <apex:column headerValue="Expected Discharge Date"
+                                value="{!objAuthWrap.Expected_Dscharg_Date}" />
+                            <apex:column headerValue="Actual Discharge Date"
+                                value="{!objAuthWrap.Actual_Dscharg_Date}" />
+                            <apex:column headerValue="Facility/Status"
+                                value="{!objAuthWrap.Facility_Status}" />
+                            <apex:column headerValue="Primary Diagnosis"
+                                value="{!objAuthWrap.Primary_Diagnosis}" />
+                            <apex:column headerValue="POS" value="{!objAuthWrap.POS}" />
+                            <apex:column headerValue="Service Desc/Detail"
+                                value="{!objAuthWrap.ServiceDescDetail}" />
+                            <apex:column headerValue="LOS" value="{!objAuthWrap.LOS}" />
+
+                            </apex:pageblockTable>
+                    </apex:pageblocksection>
+                    <apex:pageblocksection title="Outpatient Facility Cases"
+                        html-auto-doc="true" html-auto-doc-case-items="true">
+                        <apex:outputpanel rendered="{!IF(facilityAuthorizedList.size>0,false,true)}">
+                            <p style="color: black; text-align: center;">No records found</p>
+                        </apex:outputpanel>
+                        <apex:pageblocktable value="{!facilityAuthorizedList}"
+                            var="objAuthWrap" id="OutpatientFacilityTable"
+                            rendered="{!IF(facilityAuthorizedList.size>0,true,false)}">
+                            
+
+                            <apex:column headerValue="Authorization Number" styleclass="keyFieldId"> 
+                                <apex:outputLink value="#" styleclass="keyfieldId"
+                                    onclick="return AuthorizationNumber_OnClick('{!JSENCODE(objAuthWrap.Authorization_Number)}','{!JSENCODE(objAuthWrap.AuthID)}', '{!JSENCODE(objAuthWrap.Case_Type_Code)}', '{!JSENCODE(objAuthWrap.Case_Type_Desc)}','OutpatientFacilityCases','{!JSENCODE(objAuthWrap.Case_Status)}','{!JSENCODE(objAuthWrap.Expected_Dscharg_Date)}','{!JSENCODE(objAuthWrap.Pre_Determination) }','{!JSENCODE(objAuthWrap.Expected_Admit_Date) }','{!JSENCODE(objAuthWrap.Actual_Admit_Date) }','{!JSENCODE(objAuthWrap.Actual_Dscharg_Date)}','{!JSENCODE(objAuthWrap.jsonString)}');">{!JSENCODE(objAuthWrap.Authorization_Number)}</apex:outputLink>
+                            </apex:column>
+                            <apex:column headerValue="Case Status"
+                                value="{!objAuthWrap.Case_Status}"
+                                onclick="acet.autodoc.startAutodoc('opSearchResults')" />
+                            <apex:column headerValue="Pre Determination"
+                                value="{!objAuthWrap.Pre_Determination}" />
+                            <apex:column headerValue="Create Date"
+                                value="{!objAuthWrap.Create_Date }" />
+                            <apex:column headerValue="Expected Start Date"
+                                value="{!objAuthWrap.Expected_Start_Date }" />
+                            <apex:column headerValue="Actual Start Date"
+                                value="{!objAuthWrap.Actual_Start_Date }" />
+                            <apex:column headerValue="Expected End Date"
+                                value="{!objAuthWrap.Expected_End_Date }" />
+                            <apex:column headerValue="Actual End Date"
+                                value="{!objAuthWrap.Actual_End_Date }" />
+                            <apex:column headerValue="Facility/Status"
+                                value="{!objAuthWrap.Facility_Status}" />
+                            <apex:column headerValue="Service Provider/Status"
+                                value="{!objAuthWrap.ServiceProvider}" />
+                            <apex:column headerValue="Primary Diagnosis"
+                                value="{!objAuthWrap.Primary_Diagnosis}" />
+                            <apex:column headerValue="Procedure Code"
+                                value="{!objAuthWrap.Procedure_Code}" />
+                            <apex:column headerValue="POS" value="{!objAuthWrap.POS}" />
+                            <apex:column headerValue="Service Desc/Detail"
+                                value="{!objAuthWrap.ServiceDescDetail}" />
+                            </apex:pageblockTable>
+                    </apex:pageblocksection>
+
+                    <apex:pageblocksection title="Outpatient Cases"
+                        html-auto-doc="true" html-auto-doc-case-items="true">
+                        <apex:outputpanel rendered="{!IF(outPatientAuthorizedList.size>0,false,true)}">
+                            <p style="color: black; text-align: center;">No records
+                                found</p>
+                        </apex:outputpanel>
+                        <apex:pageblocktable value="{!outPatientAuthorizedList}"
+                            var="objAuthWrap" id="OutpatientTable"
+                            rendered="{!IF(outPatientAuthorizedList.size>0,true,false)}">
+
+                            
+
+                            <apex:column headerValue="Authorization Number">
+                                <apex:outputLink value="#" styleclass="keyfieldId"
+                                    onclick="return AuthorizationNumber_OnClick('{!JSENCODE(objAuthWrap.Authorization_Number)}','{!JSENCODE(objAuthWrap.AuthID)}', '{!JSENCODE(objAuthWrap.Case_Type_Code)}', '{!JSENCODE(objAuthWrap.Case_Type_Desc)}','OutpatientCases','{!JSENCODE(objAuthWrap.Case_Status)}','{!JSENCODE(objAuthWrap.Expected_Dscharg_Date)}','{!JSENCODE(objAuthWrap.Pre_Determination) }','{!JSENCODE(objAuthWrap.Expected_Admit_Date) }','{!JSENCODE(objAuthWrap.Actual_Admit_Date) }','{!JSENCODE(objAuthWrap.Actual_Dscharg_Date)}','{!JSENCODE(objAuthWrap.jsonString)}');">{!JSENCODE(objAuthWrap.Authorization_Number)}</apex:outputLink>
+                            </apex:column>
+                            <apex:column headerValue="Case Status"
+                                value="{!objAuthWrap.Case_Status}" />
+                            <apex:column headerValue="Pre Determination"
+                                value="{!objAuthWrap.Pre_Determination}" />
+                            <apex:column headerValue="Create Date"
+                                value="{!objAuthWrap.Create_Date}" />
+                            <apex:column headerValue="Start Date"
+                                value="{!objAuthWrap.Start_Date}" />
+                            <apex:column headerValue="End Date"
+                                value="{!objAuthWrap.End_Date}" />
+                            <apex:column headerValue="Service Provider/Status"
+                                value="{!objAuthWrap.ServiceProviderStatus}" />
+                            <apex:column headerValue="Primary Diagnosis"
+                                value="{!objAuthWrap.Primary_Diagnosis}" />
+                            <apex:column headerValue="Procedure Code"
+                                value="{!objAuthWrap.Procedure_Code}" />
+                            <apex:column headerValue="Count" value="{!objAuthWrap.Count}" />
+                            <apex:column headerValue="POS" value="{!objAuthWrap.POS}" />
+                            <apex:column headerValue="Service Desc/Detail"
+                                value="{!objAuthWrap.ServiceDescDetail}" />
+                            </apex:pageblockTable>
+                    </apex:pageblocksection>
+
+
+                </apex:pageblock>
+            </apex:outputPanel>
+        </apex:outputPanel>
+   
+    </apex:form>
+
+    <script type="text/javascript">
+   
+    function validateF(btnApply) 
+    { 
+        var $StartDate = document.getElementById("{!$Component.Pageid.formid.Block1.pbFilterSection.StartDateSection.StartDate}");
+        var $EndDate = document.getElementById("{!$Component.Pageid.formid.Block1.pbFilterSection.EndDateSection.EndDate}");
+            
+                    
+       var ValidationResult = true;
+       
+      if($StartDate.value != ''){
+        if(isDateFormat($StartDate.value)){
+
+            $StartDate.setAttribute("class","");
+            var divs = $StartDate.parentNode.parentNode.getElementsByClassName("errorMsg");
+            divs[0].style.display="none";
+            }
+            else {
+            errorMsg = 'ERROR';
+            $StartDate.setAttribute("class","Required");
+            var divs = $StartDate.parentNode.parentNode.getElementsByClassName("errorMsg");
+            divs[0].innerHTML = "<b>Error:</b> Invalid Start Date";
+            divs[0].style.display="block";    
+            ValidationResult = false;
+            }
+      }
+       
+       if($EndDate.value != ''){
+
+            if(isDateFormat($EndDate.value)){
+            $EndDate.setAttribute("class","");
+            var divs = $EndDate.parentNode.parentNode.getElementsByClassName("errorMsg");
+            divs[0].style.display="none";
+           }
+            else{
+            errorMsg = 'ERROR';
+            $EndDate.setAttribute("class","Required");
+            var divs = $EndDate.parentNode.parentNode.getElementsByClassName("errorMsg");
+            divs[0].innerHTML = "<b>Error:</b> Invalid End Date";
+            divs[0].style.display="block";    
+            ValidationResult = false;
+            }
+
+            
+        }  
+                if(isDateFormat($StartDate.value) && isDateFormat($EndDate.value) && new Date($StartDate.value) > new Date($EndDate.value))
+           {
+           
+                errorMsg = 'ERROR';
+                $StartDate.setAttribute("class","Required");
+                $EndDate.setAttribute("class","Required");
+                var divs = $EndDate.parentNode.parentNode.getElementsByClassName("errorMsg");
+                divs[0].innerHTML = "<b>Error:</b> End date must be equal to or later than Start Date ";
+                divs[0].style.display="block";    
+              
+                ValidationResult = false;             
+                  
+           }
+                            
+        if (ValidationResult) {
+            ApplyFilterAF();
+            return true;
+           
+        }
+        else {
+           return true;   
+        }        
+              
+      } 
+     // Function to Cancel Call topic//
+     function cancel(){ 
+            var url = 'interactionId={!JSENCODE($CurrentPage.parameters.interactionId)}';
+            url +='&contactId={!JSENCODE($CurrentPage.parameters.contactId)}';
+            url +='&callTopic=Provider Other Inquiry';
+            url +='&originatorRelationship={!wrapper.AdditionalInfo.OriginatorRelationship}';
+            sforce.console.getFocusedPrimaryTabId(function(result){
+                url = 'apex/ACETMemberOpenTopicCancel?'+url;
+                sforce.console.openSubtab(result.id , url, true,'Cancel', null);
+                });
+            return false;
+        }
+              
+      var focusSuccess = function focusSuccess(result) {
+            //Report whether going to the subtab was successful
+            if (result.success == true) {
+               // alert('Going to the subtab was successful');
+            } else {
+                //alert('Going to the subtab was not successful');
+            }
+        };
+            
+      function Misdirect(){ 
+            var url = 'interactionId={!JSENCODE($CurrentPage.parameters.interactionId)}';
+            url +='&contactId={!JSENCODE($CurrentPage.parameters.contactId)}';
+            url +='&callTopic=View Authorization';
+            url +='&originatorRelationship={!wrapper.AdditionalInfo.OriginatorRelationship}';
+            sforce.console.getFocusedPrimaryTabId(function(result){
+                url = 'apex/ACETMemberOpenTopicMisdirect?'+url;
+                sforce.console.openSubtab(result.id , url, true,'Cancel', null);
+                });
+            console.log(url);
+            return false;
+        }
+    // Function to verify Date format 
+    function isDateFormat(txtDate)
+    {
+      var currVal = txtDate;
+      if(currVal == '')
+        return false;
+      
+      //Declare Regex  
+      var rxDatePattern = /^(\d{1,2})(\/|-)(\d{1,2})(\/|-)(\d{4})$/; 
+      var dtArray = currVal.match(rxDatePattern); // is format OK?
+    
+      if (dtArray == null)
+         return false;
+     
+      //Checks for mm/dd/yyyy format.
+      dtMonth = dtArray[1];
+      dtDay= dtArray[3];
+      dtYear = dtArray[5];
+    
+      if (dtMonth < 1 || dtMonth > 12)
+          return false;
+      else if (dtDay < 1 || dtDay> 31)
+          return false;
+      else if ((dtMonth==4 || dtMonth==6 || dtMonth==9 || dtMonth==11) && dtDay ==31)
+          return false;
+      else if (dtMonth == 2)
+      {
+         var isleap = (dtYear % 4 == 0 && (dtYear % 100 != 0 || dtYear % 400 == 0));
+         if (dtDay> 29 || (dtDay ==29 && !isleap))
+              return false;
+      }
+      return true;
+    }   
+        
+    function ClearSearchCriteria(btnClear)
+    {
+        var AuthorizationNumber = $("[id$='AuthorizationNumber']");
+        var AuthorizationType   = $("[id$='AuthorizationType']");
+        var Status              = $("[id$='Status']");
+        var StartDate           = $("[id$='StartDate']");
+        var EndDate             = $("[id$='EndDate']");
+                    
+        AuthorizationNumber.val("");
+        AuthorizationType.val("");
+        Status.val("");
+        StartDate.val("");
+        EndDate.val("");
+        ClearFilterAF();
+    }     
+        
+        
+        function initCoverageTable(){
+            $("input[type='radio'][name='showCoverage']").on("change", function(){                           
+              toggleShowCoverages();      
+            });
+            
+            $("[id$='coverage-table']").find("tr").click(function(){                                                                
+                //highlight selected row
+                $(this).parent().children().removeClass('active');
+                $(this).addClass('active');
+                                                                                                      
+                //post back and refresh hightpanel and member family
+                var guid = $(this).find("[id$='clGUID']").val();                
+                $("[id$='preferredCoverageGUID']").val(guid);
+                selectPreferredCoverage();                                                                 
+            }); 
+            
+            //highlight the first row of medical coverages as preferred coverage line
+            var firstRowFound = false;
+            $("[id$='coverage-table']").find("tbody tr").each(function(){
+                var $tr = $(this);
+                $tr.find("td").each(function(){                 
+                    if($(this).html() == 'Medical' && firstRowFound == false){
+                        $tr.addClass('active');
+                        firstRowFound = true;
+                    }   
+                });                                             
+            });
+            
+            //highlight first row by default
+            if(!firstRowFound){
+                $("[id$='coverage-table']").find("tbody tr:first").addClass('active'); 
+            }
+                        
+            //post back and refresh hightpanel and member family
+            var guid = $("[id$='coverage-table']").find(".active").find("[id$='clGUID']").val();                
+            $("[id$='preferredCoverageGUID']").val(guid);
+        }    
+    
+    function AuthorizationNumber_OnClick(AuthorizationNumber,AuthId, CaseTypeCode, CaseTypeDesc, Type, CaseStatus, Expected_Dscharg_Date, PreDetermination, Expected_Admit_Date, Actual_Admit_Date, Actual_Dscharg_Date,acetMyDetail) {
+        //addCaseItem(AuthorizationNumber);
+        //1- Inpatient, 2 - Outpatient, 3 - Outpatient Facility
+        console.log('AuthId::' + AuthId +  ' ::surrogateKey:: ' + {!surrogateKey});
+        var url= '/apex/ACETAuthorizationDetail?'; 
+        url = url +'BenefitPlanID={!AdditionalInfo.BenefitPlanId}'+'&'+'MemberId={!AdditionalInfo.MemberId}'+'&'+'DOB={!AdditionalInfo.DOB}' + '&' + 'SitusState={!AdditionalInfo.SitusState}'+'&'+ 'EffectiveDate={!AdditionalInfo.EffectiveDate}'+'&'+'EndDate={!AdditionalInfo.EndDate}';
+        url = url+'&'+'consumerAccountIndicator={!AdditionalInfo.consumerAccountIndicator}'+'&'+'GroupNumber={!AdditionalInfo.GroupNumber}'+ '&'+'GroupName={!AdditionalInfo.groupName}'+'&'+'Network={!AdditionalInfo.Network}'+'&'+'OriginatorRelationship={!AdditionalInfo.OriginatorRelationship}'
+        +'&'+'PolicyNumber={!AdditionalInfo.PolicyNumber}'+'&'+'Product={!AdditionalInfo.Product}'+'&'+'productType={!AdditionalInfo.productType}'
+        +'&'+'Relationship={!AdditionalInfo.Relationship}'+'&'+'SitusState={!AdditionalInfo.SitusState}'+'&'+'AuthorizationNumber='+AuthorizationNumber;
+        url = url +'&'+ 'interactionId={!JSENCODE(Interaction.Id)}' +'&' + 'contactId={!JSENCODE(Subject.Id)}' + '&' + 'sourceOriginator={!sourceOriginator}'+'&Type='+Type+'&XrefId='+''+'&caseStatusReason='+CaseStatus+'&ExpectedDischargeDate='+Expected_Dscharg_Date+'&PreDetermination='+PreDetermination+'&ExpectedAdmitDate='+Expected_Admit_Date+'&ActualAdmitDate='+Actual_Admit_Date+'&ActualDschargDate='+Actual_Dscharg_Date+'&AuthId='+AuthId+'&authDeailInfo='+acetMyDetail; 
+        url = url +'&' + 'SRK={!surrogateKey}';
+        sforce.console.getEnclosingPrimaryTabId(function(result) {
+            sforce.console.openSubtab(result.id, url, true, 'Auth - ' + AuthorizationNumber, null, null, 'Auth - ' + AuthorizationNumber);
+        });
+        
+        return false;         
+    }
+    
+  //  Added By Prakash on 11/23/2016- Auto Doc feature
+    $(document).ready(function(){
+            acet.autodoc.startAutodoc();
+            acet.autodoc.createCommentsbox();
+            acet.autodoc.subTabIds = []; 
+            
+            // added by sumit jain    
+           //var vccdParams =  JSON.parse('{!JSENCODE($CurrentPage.parameters.vccdParams)}');
+
+          //$("[id$='StartDate']").val(vccdParams.StartDate);
+          //$("[id$='EndDate']").val(vccdParams.EndDate);   
+          //$("[id$='AuthorizationNumber']").val(vccdParams.AuthorizationNumber);  
+                        
+            var subjectId = '{!Subject.Id}';
+            acet.autodoc.getAutodocFromSubTabs = function(){
+                acet.autodoc.additionalInfo = '';   
+                sforce.console.fireEvent('RequestAuthorizationDetail_'.concat(subjectId), subjectId);            
+            };           
+            
+            sforce.console.addEventListener('ReceiveAuthorizationDetail_'.concat(subjectId), function(r){                   
+                var res = JSON.parse(r.message);     
+                acet.autodoc.subTabIds.push(res.subTabId);
+                    
+                if(res.doc){
+                    var spaceSeperator = '<div id="seperator" style="width:100%;height:50px;"></div>';                                                 
+                    acet.autodoc.additionalInfo = acet.autodoc.additionalInfo + spaceSeperator + res.doc; 
+                }
+               //Closing the Authorization detail subtabs
+               sforce.console.closeTab(res.subTabId);                                    
+            }); 
+            
+            //close all sub tabs
+            acet.autodoc.closeSubTabs = function(){
+                sforce.console.fireEvent('CloseAuthorizationDetailSubTab_'.concat(subjectId), subjectId);    
+            }
+                                   
+        });
+           
+           // added by sumit jain 
+         $(document).ready(function() {     
+     
+      var noAutoSearch = '{!JSENCODE($CurrentPage.parameters.noAutoSearch)}';
+           if(noAutoSearch != 'true'){
+               var vccdParams;
+               vccdParams =  JSON.parse('{!JSENCODE($CurrentPage.parameters.vccdParams)}');
+               $("[id$='StartDate']").val(vccdParams.StartDate);
+               $("[id$='EndDate']").val(vccdParams.EndDate);  
+               $("[id$='AuthorizationNumber']").val(vccdParams.AuthorizationNumber);  
+                                  
+               $("[id$='btnApply']").click();
+
+           }
+                      
+       });        
+       
+   </script>
+<style type="text/css">
+.imgclass:hover {
+    background-image: url('/img/help/helpOrbs.gif');
+    background-repeat: no-repeat;
+    width: 16px;
+    height: 15px;
+    background-position: right;
+}
+
+.imgclass {
+    background-image: url('/img/help/helpOrbs.gif');
+    background-repeat: no-repeat;
+    width: 16px;
+    height: 15px;
+}
+</style>
+    <apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/main.js')}" />
+</apex:page>

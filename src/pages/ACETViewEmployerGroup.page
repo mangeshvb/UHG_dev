@@ -1,0 +1,929 @@
+<apex:page controller="ACETViewEmployerGroupController" sidebar="false" applyBodyTag="true" applyHtmlTag="true" action="{!updateProcucertab}">
+    <apex:includeScript value="{!$Resource.JQuery}"/>
+    <apex:includeScript value="{!$Resource.JqueryTableSorter}"/>
+    <apex:includeScript value="/support/console/38.0/integration.js"/>
+    <apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/vendor/chosen.jquery.min.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.ACETResources, '/css/vendor/chosen.min.css')}" /> 
+    <apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/main.js')}" />
+    <apex:includeScript value="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></apex:includeScript>    
+    <apex:stylesheet value="{!URLFOR($Resource.ACETResources, '/css/m/memberdetail.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.jQueryDatatableResources,'jquery-ui.css')}" />    
+    <apex:includeScript value="{!URLFOR($Resource.jQueryDatatableResources,'jquery.dataTables.min.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.jQueryDatatableResources,'jquery.dataTables.min.css')}" />    
+    <apex:includeScript value="{!URLFOR($Resource.jQueryDatatableResources,'jquery.highlight.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.jQueryDatatableResources,'dataTables.searchHighlight.min.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.jQueryDatatableResources,'dataTables.searchHighlight.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.jQueryDatatableResources,'datetime-moment.js')}"/>   
+    
+      <style>
+      .PageHeader {
+      font-size:x-large;
+      }
+      .caseHistory tbody{
+    position: absolute;
+    top: 240px;
+    }
+    .applicationTable {width: "20PX"; !important}\
+    #testClass {Width:inherit !important}
+    
+    .custPopup {
+        background-color: white;
+        border-width: 2px;
+        border-style: solid;
+        z-index: 9999;
+        left: 30%;
+        padding: 10px;
+        position: absolute;
+        margin-left: -150px;
+        top: 100px;
+        margin-top:50%;
+    }
+    
+    .popupBackground {
+        background-color: black;
+        opacity: 0.20;
+        filter: alpha(opacity = 20);
+        position: absolute;
+        width: 100%;
+        height: 2000%;
+        top: 0;
+        left: 0;
+        z-index: 9998;
+    }
+   </style>  
+   
+   <script type="text/javascript">
+       var subtabIds = new Array();
+       $(document).ready(function() {
+           var defaultOriginator = $("[id$='originator']").val();
+           $("[id$='originator']").on("change", function(){
+            });
+           
+           //added by bhanu : For third party contact : starts
+            $("#selectedTPName").change(function(){
+                var currentTp = $(this).val();
+                var ODefault = $(this).attr("name");
+                var oHtml = $("[id$='originator']").html();
+                var existedTP = $("[id$='originator']").find("#currentTP");
+                var newOption;
+                var temp = '';
+                if($(existedTP).length != 0){
+                    $("[id$='originator']").find("#currentTP").remove();
+                }
+                if(currentTp == ''){
+                    $("[id$='originator']").val(defaultOriginator);
+                }else if(ODefault == 'none'){
+                    newOption = "<option id = 'currentTP' value = 'currentTp' selected='selected'>"+currentTp+"</option>";
+                    $("[id$='originator']").append(newOption);
+                    $("[id$='originator']").val('currentTp').change();
+                }
+
+            });    
+            
+        //init multiple selection dropdown
+        $("#callTopicType").chosen({ search_contains: true });
+   });
+
+   function closePopUp(){
+        $("[id$='modalWindowProducer']").hide();
+        $("[id$='modalWindowContact']").hide();        
+        resetWindow();
+   }
+   
+   function addChosenAgain()
+   {
+       $("#callTopicType").chosen({ search_contains: true });
+           
+   }
+   var GroupDetailPrimaryTabId = '';        
+   var MemberSearchSubTabId = '';
+   var vccdParams = '{!$CurrentPage.parameters.vccdParams}'; 
+   var hightlightPanelInfo;
+   function memberSearchClick(hlpInfo)
+   {
+        var orinatorName = $("[id$='originator']").val();
+        var $ContactName = $("[id$='ContactName']");
+        var $ContactType = $("[id$='ContactType']");
+        
+        $("[id$='originator']").removeClass("error").parent().find(".errorMsg").remove();
+        $ContactName.removeClass("error").parent().find(".errorMsg").remove();
+        $ContactType.removeClass("error").parent().find(".errorMsg").remove();
+        $("#callTopicType").removeClass("error").parent().find(".errorMsg").remove();
+        
+        if(orinatorName == '----None----')
+        {
+            var errorMsg = "You must select a value."; 
+            $("[id$='originator']").addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+            //return false; 
+        }
+        if($ContactType.val() =='----None----' && orinatorName != 'currentTp')
+        {
+            var errorMsg = "You must select a value."; 
+            $ContactType.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+        }
+        if($ContactName.val() ==''){
+           var errorMsg = "You must enter a value."; 
+           $ContactName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');  
+        }else
+        {       
+            hightlightPanelInfo = hlpInfo;
+            sforce.console.getEnclosingPrimaryTabId(OpenMemberSearchSubTab);
+        }
+        return false;
+    }
+    
+    var OpenMemberSearchSubTab = function OpenMemberSearchSubTab(result) {
+        //Now that we have the primary tab ID, we can open a new subtab in it
+        GroupDetailPrimaryTabId = result.id;
+         if (MemberSearchSubTabId == '') {
+            //Removed enrollag, rehirepolicy and group size parameters from URL for US585208 -- by divya -- 04/05/17       
+            if(vccdParams != null && vccdParams != '')
+                sforce.console.openSubtab(GroupDetailPrimaryTabId , '/apex/ACETMemberSearch?' +'InteractionId={!interaction.Id}&vccdParams=' + JSON.stringify(vccdParams)+'&additionalInfo='+hightlightPanelInfo, true, 'Member Search', null, OpenMemberSearchSubTabSuccess, 'GroupMemberSearch');
+            else
+                sforce.console.openSubtab(GroupDetailPrimaryTabId , '/apex/ACETMemberSearch?' +'InteractionId={!interaction.Id}&groupId={!groupDetails.genGroupInfo.groupId}&additionalInfo='+hightlightPanelInfo, true, 'Member Search', null, OpenMemberSearchSubTabSuccess, 'GroupMemberSearch');
+        }
+        else {
+            sforce.console.focusSubtabById(MemberSearchSubTabId, FocusMemberSearchSubTabSuccess);
+        }    
+    };
+    
+    var OpenMemberSearchSubTabSuccess = function OpenMemberSearchSubTab(result) {
+        MemberSearchSubTabId = result.id;
+    }
+    
+    var FocusMemberSearchSubTabSuccess = function FocusMemberSearchSubTabSuccess(result) {
+        if (!result.success) {
+            //Removed enrollag, rehirepolicy and group size parameters from URL for US585208 -- by divya -- 04/05/17
+            if(vccdParams != null && vccdParams != '')
+                sforce.console.openSubtab(GroupDetailPrimaryTabId , '/apex/ACETMemberSearch?' +'InteractionId={!interaction.Id}&groupId={!groupDetails.genGroupInfo.groupId}&vccdParams=' + JSON.stringify(vccdParams)+'&additionalInfo='+hightlightPanelInfo, true, 'Member Search', null, OpenMemberSearchSubTabSuccess, 'GroupMemberSearch');
+            else
+                sforce.console.openSubtab(GroupDetailPrimaryTabId , '/apex/ACETMemberSearch?' +'InteractionId={!interaction.Id}&groupId={!groupDetails.genGroupInfo.groupId}&additionalInfo='+hightlightPanelInfo, true, 'Member Search', null, OpenMemberSearchSubTabSuccess, 'GroupMemberSearch');
+        }
+    }
+
+    function OpenCaseHistorySubTab(RecordId, RecordName) {   
+        sforce.console.getEnclosingPrimaryTabId(function(result) {
+        sforce.console.openSubtab(result.id, '/' + RecordId, true, RecordName, null, OpenCaseHistorySubTabSuccess, RecordName);    
+        
+        return false;
+    });
+    }
+    var OpenCaseHistorySubTabSuccess = function OpenCaseHistorySubTabSuccess(result) 
+    {
+        //
+    }
+    
+    function validate(hightlightPanelInfo,interactionId,groupId,subjectId )
+    {
+        var callTopics = $("#callTopicType").chosen().val();
+        var orinatorName = $("[id$='originator']").val();
+        var validate = true;
+         $("#OriginatorNameType").removeClass("error").parent().find(".errorMsg").remove();
+        $("[id$='originator']").removeClass("error").parent().find(".errorMsg").remove();
+         var $ContactName = $("[id$='ContactName']");
+        var $ContactType = $("[id$='ContactType']");
+        
+        $ContactName.removeClass("error").parent().find(".errorMsg").remove();
+        $ContactType.removeClass("error").parent().find(".errorMsg").remove();
+        $("#callTopicType").removeClass("error").parent().find(".errorMsg").remove();
+        if(orinatorName == '----None----')
+        {
+            var errorMsg = "You must select a value."; 
+            $("[id$='originator']").addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+            //return false; 
+            validate = false;
+        }
+        if($ContactType.val() =='----None----' && orinatorName != 'currentTp')
+        {
+            var errorMsg = "You must select a value."; 
+            $ContactType.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+            //return false; 
+            validate = false;
+        }
+        if($ContactName.val() ==''){
+           var errorMsg = "You must enter a value."; 
+           $ContactName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+           //return false;  
+           validate = false;                
+        }
+        if(!callTopics){
+            var errorMsg = "You must enter a value."; 
+            $("#callTopicType").addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+            //return false;
+            validate = false;        
+        }    
+        
+        var isActive = true;
+        var urlParam = 'interactionId='+interactionId+'&groupId='+groupId+'&contactId='+subjectId+'&additionalInfo='+hightlightPanelInfo;
+        if(callTopics && validate) {
+            for(var i = 0; i < callTopics.length; i++){
+                var callTopic = callTopics[i];
+                
+                if(callTopic == 'Enroll Subscriber')
+                {
+                   //Removed enrollag, rehirepolicy and group size parameters from URL for US585208 -- by divya -- 04/05/17
+                   sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETEnrollMember?memberEnrollment={!memberEnrollment}&callTopic=Enroll Subscriber' + '&' + urlParam;
+                        sforce.console.openSubtab(result.id , url, isActive,'Enroll Subscriber', null);
+                    }); 
+                }
+                else if(callTopic == 'Escalated Call Backs')
+                {    
+                     sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETCaseDocumentation?callTopic=Escalated Call Backs' + '&' + urlParam;
+                        sforce.console.openSubtab(result.id , url, isActive,'Escalated Call Backs', null);
+                    }); 
+                }
+                else if(callTopic == 'View Billing')
+                {   
+                    var vccdParams =  '{!JSENCODE($CurrentPage.parameters.vccdParams)}'; 
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETViewBilling?callTopic=View Billing' + '&' + urlParam +'&vccdParams='+vccdParams;
+                        sforce.console.openSubtab(result.id , url, isActive,'View Billing', null);
+                    }); 
+                }
+                else if(callTopic == 'Off-Cycle Changes')
+                {   
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETOffcycleChanges?callTopic=Off-Cycle Changes' + '&' + urlParam +'&vccdParams='+vccdParams;
+                        sforce.console.openSubtab(result.id , url, isActive,'Off-Cycle Changes', null);
+                    }); 
+                }
+                else if(callTopic == 'View Member Listing')
+                {
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETViewMemberListing?subscriber=subscriber&status=Active&callTopic=View Member Listing' + '&' + urlParam;
+                        sforce.console.openSubtab(result.id , url, isActive,'View Member Listing',null,openedTabs);
+                    }); 
+                }
+                else if(callTopic == 'Group Plan')
+                {
+                   sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETGroupPlanBenefit?callTopic=Group Plan' + '&' + urlParam+'&vccdParams='+vccdParams;
+                        sforce.console.openSubtab(result.id , url, isActive,'Group Plan', null,openedTabs);
+                    });
+                }
+                else if(callTopic == 'New Business')
+                {    
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETServiceRenewal?callTopic=newBusiness' + '&' + urlParam;
+                        sforce.console.openSubtab(result.id , url, isActive,'New Business', null);
+                    }); 
+                }
+                else if(callTopic == 'Renewals')
+                {
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETServiceRenewal?callTopic=Renewals' + '&' + urlParam;
+                        sforce.console.openSubtab(result.id , url, isActive,'Renewals', null);
+                    });        
+                }  
+                else if(callTopic == 'Life Inquiry')
+                {
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETLifeInquiry?callTopic=Life Inquiry' + '&' + urlParam;
+                        sforce.console.openSubtab(result.id , url, isActive,'Life Inquiry', null);
+                    });
+                } 
+                else if(callTopic == 'Dental Inquiry')
+                {
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETDentalInquiry?callTopic=Dental Inquiry' + '&' + urlParam;
+                        sforce.console.openSubtab(result.id , url, isActive,'Dental Inquiry', null);
+                    });
+                }
+                else if(callTopic == 'Medical Loss Ratio')
+                {
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETMedicalLossRatio?callTopic=Medical Loss Ratio' + '&' + urlParam;
+                        sforce.console.openSubtab(result.id , url, isActive,'Medical Loss Ratio', null);
+                    });
+                }  
+                else if(callTopic == 'Vision Inquiry')
+                {
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETVisionInquiry?callTopic=Vision Inquiry' + '&' + urlParam;
+                        sforce.console.openSubtab(result.id , url, isActive,'Vision Inquiry', null);
+                    });
+                }
+                else if(callTopic == 'Group Eligibility')
+                {
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETGroupEligibility?callTopic=Group Eligibility' + '&{!groupNumber}' + '&' + urlParam;
+                        sforce.console.openSubtab(result.id , url, isActive,'Group Eligibility', null);
+                    });
+                } 
+                else if(callTopic == 'Update Group Information')
+                {
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETUpdateGroupInformation?callTopic=Update Group Information' + '&' + urlParam;
+                        sforce.console.openSubtab(result.id , url, isActive,'Update Group Information', null);
+                    });
+                }
+                else if(callTopic == 'Group Other Inquiry')
+                {
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETEmployerBrokerOtherInquiry?callTopic=Group Other Inquiry' + '&' + urlParam;
+                        sforce.console.openSubtab(result.id , url, isActive,'Group Other inquiry', null);
+                    });
+                }
+                else if(callTopic == 'Communications')
+                {
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETCommunicationsSearchPage?callTopic=Dental Inquiry' + '&' + urlParam;
+                        sforce.console.openSubtab(result.id , url, isActive,'Communications', null);
+                    });
+                } 
+                else if(callTopic == 'Materials Request')
+                {
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        var url = '/apex/ACETFormsHistory?' + '&' + urlParam;
+                        sforce.console.openSubtab(result.id , url, isActive,'Materials Request',null,openedTabs);
+                    }); 
+                }
+            }
+        }             
+        return false;         
+    }
+    //Added by Divya  
+    var openedTabs = function openedTabs(result) {
+        if (result.success == true) {
+            subtabIds.push(result.id);
+        } else {
+        }
+    };
+    function contactName(){
+    $("[name$='ContactName']").focus();
+    }
+       
+    function updateCall()
+    {
+        if(retFlag == true)
+        {
+            updateValues();
+            return true;
+        }
+        else
+        {
+            return false;
+        }    
+    }   
+    
+    function updateContact(obj)
+    {
+         var orinatorName = $("[id$='originator']").val();
+        var $ContactName = $("[id$='ContactName']");
+        var $ContactType = $("[id$='ContactType']");
+        $("[id$='originator']").removeClass("error").parent().find(".errorMsg").remove();
+        $ContactName.removeClass("error").parent().find(".errorMsg").remove();
+        $ContactType.removeClass("error").parent().find(".errorMsg").remove();
+        $("#callTopicType").removeClass("error").parent().find(".errorMsg").remove();
+        
+        if(orinatorName == '----None----')
+        {
+            var errorMsg = "You must select a value."; 
+            $("[id$='originator']").addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+            $("[id$='ContactName']").val('');
+            //return false; 
+        }
+        if($ContactType.val() =='----None----')
+        {
+            var errorMsg = "You must select a value."; 
+            $ContactType.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+            $("[id$='ContactName']").val('');
+            //return false; 
+        }else
+        {
+           createUpdateContact(obj.value);
+           
+        }
+        
+    }
+    
+    function changeContactType(obj)
+    {
+       if($(obj).val() == 'thirdPartId'){
+           checkThirdPartyContacts();
+       }else if ($(obj).val() == 'currentTp'){
+                   //do nothing
+                   $("[id$='ContactType']").html("<option value='----None----'>----None----</option>");
+                   updateContactType($(obj).find("option:selected").text()); 
+       }
+       else{
+           var existedTP = $("[id$='originator']").find("#currentTP");
+           $(existedTP).remove();
+           updateContactType($(obj).val());
+       }  
+       
+       
+    }
+    
+    function changeContactName(obj)
+    {
+        updateContactNameField();
+    
+    }
+    
+    $(document).ready(function(){  
+        $("#callTopicType").chosen();
+        $("[id$='CaseHistoryTable']").tablesorter({ });
+       
+        var CaseHistoryTable = $('[cid$="CaseHistoryTable"]').parent('table').eq(0).DataTable({
+            searchHighlight: true,
+            "pagingType": "full_numbers",
+            //sets record lengths to show in picklist
+            aLengthMenu: [
+                [10, 25, 50, 100, 200, -1],
+                [10, 25, 50, 100, 200, "All"]
+            ],
+            "iDisplayLength": 50,
+            order: [[3, 'desc']],
+           
+        });
+        var vccdParamsStr = '{!$CurrentPage.parameters.vccdParams}';
+        if(vccdParamsStr != ''){
+                var vccdParams =  JSON.parse(vccdParamsStr);
+                if(vccdParams.callTopic != '')
+                    $("#callTopicType").val(vccdParams.callTopic).trigger("chosen:updated");
+            }
+            
+        callWCOnPgaeLoad();
+    });
+      
+   </script>
+   
+   <apex:form id="OrinatingForm">
+       <apex:actionfunction name="callWCOnPgaeLoad" action="{!CallGroupDetailCWS}" onComplete="addChosenAgain()" rerender="openMemSearch,OpenCallTOpic,contactDetailsSec,hlPanel,highlightPanelInfo1,originatorOP,contactTypeOP,linkContact,generalInformation,addressInformation,groupContactInformation, groupEligibilityInfo, employeeCountInfo,contactHistPanel,modalWindowProducer,contHistTable,modalWindowContact,modalContactPopup,prodHistPopup,internalgroupContactInf,pbsec,caseHistory,productInformation" status="refreshMemberStatus"/>
+       <!-- linkContact,generalInformation,addressInformation,groupContactInformation, groupEligibilityInfo, employeeCountInfo,contactHistPanel,modalWindowProducer,contHistTable,modalWindowContact,modalContactPopup,prodHistPopup,CaseHistory,internalgroupContactInf --->
+       <apex:actionFunction name="contactNameupdateF" reRender="contactNamePanel,ContactName,originatorOP,contactTypeOP"/>
+<!--        <apex:actionFunction name="displayRiders" action="{!displayRiders}" reRender="PurchasedBenefitsInfo, riderPanel" status="refreshMemberStatus" /> -->
+      <apex:actionFunction action="{!navigateToCallTopic}" name="updateValues" status="refreshMemberStatus"/>
+      <apex:actionFunction action="{!createUpdateContact}" name="createUpdateContact" reRender="hlPanel,additionalInfoPanel,caseHistory" status="refreshMemberStatus">
+          <apex:param id="contactName" name="contactName" value="" />
+      </apex:actionFunction>
+      <apex:actionFunction action="{!updateTPContactName}" name="updateTPContactName" reRender="hlPanel,additionalInfoPanel,originatorOP,contactNamePanel,contactTypeOP" status="refreshMemberStatus">
+          <apex:param id="aname" name="selectedVal" value="" />
+      </apex:actionFunction>
+<!--       <apex:actionFunction action="{!getInteraction}" name="getInteraction" reRender="hlPanel,additionalInfoPanel" status="refreshMemberStatus"> -->
+<!--           <apex:param id="interactionId" name="interactionId" value="" /> -->
+<!--       </apex:actionFunction> -->
+      <apex:actionFunction action="{!createInteraction}" name="createInteraction" reRender="hlPanel,additionalInfoPanel" status="refreshMemberStatus"/>
+      <apex:actionFunction action="{!updateContactType}" name="updateContactType" reRender="contactTypeOP,contactNamePanel" immediate="true" onComplete="updateCNameValue();" status="refreshMemberStatus">
+      <apex:param id="sname" name="selectedVal" value="" />
+      </apex:actionFunction>
+      <apex:actionFunction name="updateCNameValue" reRender="contactNamePanel" status="refreshMemberStatus"/>
+      <apex:actionFunction action="{!updateContactNameField}" name="updateContactNameField" reRender="contactNamePanel,hlPanel,additionalInfoPanel" status="refreshMemberStatus"/>
+      <apex:actionStatus id="refreshMemberStatus">
+            <apex:facet name="start">
+            <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                &nbsp;
+            </div>
+            <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                    <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                    <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                </div>
+            </div>
+            </apex:facet>
+        </apex:actionStatus>
+      <apex:actionFunction action="{!resetWindow}" name="resetWindow" reRender="temp, modalWindowContact, modalWindowProducer, pb" />
+      <apex:actionFunction action="{!caseHistory}" name="caseHistory" reRender="caseHistory" status="refreshMemberStatus"/>
+          
+      <c:ACETThirdPartyContacts SubjectIdAttr="{!subjectObj.id}"  additionalInfoAtr="{!AdditionalInfo}" additionalInfoStrAtr="{!hpAdditionInfoStr}" InteractionAttr="{!Interaction}"></c:ACETThirdPartyContacts>
+      
+      <apex:outputPanel id="hlPanel">
+      <c:ACETInteractionHighlightsPanel InteractionAtt="{!Interaction}" AdditionalInfoAtt="{!AdditionalInfo}" GroupDetailAtt="{!groupDetails}" TotalGroupAlerts="{!lstGroupAlert}" TotalAlerts="{!lstGroupAlert}" showALertAtt="{!isshowGroupALert}" html-auto-doc="auto"/> 
+      <!--   <c:ACETInteractionHighlightsPanel_krishna InteractionAtt="{!Interaction}" AdditionalInfoAtt="{!AdditionalInfo}" GroupDetailAtt="{!groupDetails}" TotalGroupAlerts="{!lstGroupAlert}" html-auto-doc="auto"/> -->
+     
+      </apex:outputPanel>  
+ 
+      <apex:sectionHeader title="Group Detail"/>
+       
+      <apex:pageMessages ></apex:pageMessages>
+      <c:ACETCaseActions attrShowWrapButton="false" Save="{!Save}" SaveAndClose="{!SaveAndClose}" attrShowSaveAndCloseButton="false" attrShowSaveButton="false" attrShowMisdirectButton="true" attrShowCancelButton="false" attrSourceOriginator="{!Interaction.Interaction_Type__c}" attrInteractionId="{!Interaction.Id}" attrRefreshNavigationTab="true" attrSubjectId="{!subjectObj.id}"/>  
+           
+      <br/><br/>
+      <apex:pageBlock id="groupDetailPagePB" >
+         <apex:pageBlockButtons location="bottom">
+            <apex:commandButton id="OpenCallTOpic" value="Open Topic" style="margin-left:21%" onclick="return validate('{!hpAdditionInfoStr}','{!JSENCODE(Interaction.Id)}','{!JSENCODE(groupDetails.genGroupInfo.groupId)}','{!JSENCODE(subjectObj.id)}');" oncomplete="updateCall();" />
+         </apex:pageBlockButtons>
+         <apex:pageBlockSection >
+         <apex:pageBlockSectionItem >
+             <input type="text" id="hiddenText" style="width:0px;height:0px;border: none;background-color: #fff;background: transparent;"/>
+         </apex:pageBlockSectionItem>
+         </apex:pageBlockSection>
+         <apex:pageBlockSection columns="4" id="contactDetailsSec" >  
+         
+           <apex:pageBlockSectionItem id="originatorpbsi" dataStyle="Width:inherit !important" >
+                <apex:outputLabel value="Originator"></apex:outputLabel>
+                <apex:outputPanel styleClass="requiredInput" layout="block" id="originatorOP">
+                <apex:outputPanel styleClass="requiredBlock" layout="block"/>
+                <apex:selectList id="originator" size="1" value="{!OriginatorName}" onchange="changeContactType(this);">
+                    <apex:selectOptions value="{!OriginatorNames}"></apex:selectOptions>
+                </apex:selectList>
+                </apex:outputPanel>
+            </apex:pageBlockSectionItem>
+             
+            <apex:pageBlockSectionItem dataStyle="Width:inherit !important">
+                <apex:outputLabel value="Contact Type"></apex:outputLabel>
+                <apex:outputPanel styleClass="requiredInput" layout="block" id="contactTypeOP">
+                <apex:outputPanel styleClass="requiredBlock" layout="block"/>                
+                <apex:selectList id="ContactType" size="1" value="{!ContactType}" onchange="changeContactName(this);" >
+                    <apex:selectOptions value="{!ContactTypes}"></apex:selectOptions>
+                </apex:selectList>
+                
+                </apex:outputPanel>
+            </apex:pageBlockSectionItem>
+           <apex:pageBlockSectionItem dataStyle="Width:inherit" >
+             <apex:outputLabel value="Contact Name"></apex:outputLabel>
+                <apex:outputPanel styleClass="requiredInput" layout="block" id="contactNamePanel" >
+                <apex:outputPanel styleClass="requiredBlock" layout="block"/>
+                <apex:inputText id="ContactName" value="{!ContactName}" onchange="updateContact(this);" disabled="{!displayCName}"/>
+             </apex:outputPanel>            
+        </apex:pageBlockSectionItem>
+        
+        
+        <apex:pageBlockSectionItem >
+            <apex:outputLabel value="Topic" ></apex:outputLabel>
+                <apex:outputPanel styleClass="requiredInput" layout="block">
+                <apex:outputPanel styleClass="requiredBlock" layout="block"/>
+                  <select id="callTopicType" multiple="true" data-placeholder="Select Topic">
+                    <apex:repeat value="{!CallTopicOptions}" var="opt">                                                    
+                        <option value="{!opt.Value}"><span class = "select-multi">{!opt.Label}</span></option>                                                                                              
+                    </apex:repeat>
+                </select>
+             </apex:outputPanel>
+           </apex:pageBlockSectionItem>
+           
+         </apex:pageBlockSection>
+         
+    </apex:pageBlock>
+    
+    <apex:pageBlock mode="mainDetail" id="generalGDpb">  
+        
+        <apex:pageblockSection id="generalInformation" columns="2" title="General Information">
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Group"></apex:outputLabel>
+                <apex:outputText value="{!groupDetails.genGroupInfo.groupId} - {!groupDetails.genGroupInfo.groupName}" />
+            </apex:pageBlockSectionItem>
+             <apex:pageBlockSectionItem > 
+                <apex:outputLabel value="Status"></apex:outputLabel>
+                <apex:outputText title="{!IF((groupDetails.genGroupInfo.groupStatus == 'Terminated'), groupDetails.genGroupInfo.terminationReason,'')}" value="{!groupDetails.genGroupInfo.groupStatus}"/>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Effective Start/End Date"></apex:outputLabel>
+                <apex:outputText value="{!groupDetails.genGroupInfo.effectiveStartDate} - {!groupDetails.genGroupInfo.effectiveEndDate}" /> 
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Service Team"></apex:outputLabel>
+                <apex:outputText value="{!groupDetails.genGroupInfo.serviceTeam}" />
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Renewal date"></apex:outputLabel>
+                <apex:outputText value="{!groupDetails.genGroupInfo.groupRenewalDate}" />
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Group Size"></apex:outputLabel>
+                <apex:outputText value="{!groupDetails.genGroupInfo.groupTeamSize}" />
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Risk Management"></apex:outputLabel>
+                <apex:outputText value="{!groupDetails.genGroupInfo.riskManagement}" />
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="UHCBS"></apex:outputLabel>
+                <apex:outputText value="{!groupDetails.genGroupInfo.UHCBSCOBRA}" />
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Insured"></apex:outputLabel>
+                 <apex:outputText value="{!groupDetails.genGroupInfo.insured}" />
+            </apex:pageBlockSectionItem>
+           <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Asian Initiative Indicator"></apex:outputLabel>
+                 <apex:outputText value="{!groupDetails.genGroupInfo.asianInitIndicator}" />
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Onshore Restriction"></apex:outputLabel>
+                 <apex:outputText value="{!groupDetails.genGroupInfo.onshoreRestriction}" />
+            </apex:pageBlockSectionItem>
+             <apex:pageBlockSectionItem >
+                <apex:outputLabel value="Group Tax ID"></apex:outputLabel>
+                <apex:outputText value="{!groupDetails.genGroupInfo.groupTaxId}" />
+            </apex:pageBlockSectionItem>                        
+        </apex:pageblockSection>
+        
+        <apex:commandLink id="openMemSearch" value="Go To Member Search" style="color:Blue;margin-left:45%;" onclick="return memberSearchClick('{!hpAdditionInfoStr}');"/> 
+        
+        <apex:pageblockSection id="addressInformation" columns="1" title="Address">
+            <apex:pageblocktable title="Group Address" var="addr" value="{!groupDetails.groupAddressInfoList}">
+                <apex:column value="{!addr.concatAddrLines}" headerValue="Address"/>
+                <apex:column value="{!addr.city}" headerValue="City"/>
+                <apex:column value="{!addr.state}" headerValue="State"/>
+                <apex:column value="{!addr.zip}" headerValue="Zip"/>
+                <apex:column value="{!addr.addrType}" headerValue="Address Type"/>
+            </apex:pageblocktable>
+        </apex:pageblockSection>
+        
+        <apex:pageblockSection id="groupContactInformation" columns="1" title="Group Contacts (External)">
+            <apex:pageBlockTable title="Primary Group Contact" value="{!groupDetails.groupExternalContactInfoList}" var="extContact">
+                <apex:column value="{!extContact.primaryContactType}" headerValue="Contact"/>
+                <apex:column value="{!extContact.contactType}" headerValue="Type"/>
+                <apex:column value="{!extContact.firstName}" headerValue="First Name"/>
+                <apex:column value="{!extContact.LastName}" headerValue="Last Name"/>
+                <apex:column value="{!extContact.addressType}" headerValue="Address Type"/>
+                <apex:column value="{!extContact.address}" headerValue="Address"/>
+                <apex:column value="{!extContact.Phone}" headerValue="Phone"/>
+                <apex:column value="{!extContact.fax}" headerValue="Fax"/>
+                <apex:column value="{!extContact.EmailAddress}" headerValue="Email Address"/>
+            </apex:pageBlockTable>   
+        </apex:pageblockSection>
+        <apex:commandLink action="{!ContactHistoryWindow}" value="Go To Group Contact History" id="linkContact"
+                 style="color:Blue; margin-left:45%;"  reRender="contactHistPanel,modalWindowContact,modalContactPopup,contHistTable" status="refreshMemberStatus"/>    
+       
+        <apex:outputPanel id="contactHistPanel">
+        <apex:outputPanel id="modalWindowContact" rendered="{!isContHistory}">
+        <apex:outputPanel styleClass="popupBackground" layout="block"  />
+        <apex:outputPanel styleClass="custPopup" style="margin-top:25%" layout="block" >
+            <div style="overflow: scroll; height: 400px; width: 1000px">
+                <apex:pageBlock title="Group Contact History" >
+                    <apex:pageBlockButtons location="top">
+                        <apex:commandButton value="Close" onclick="closePopUp();" rerender="temp"
+                             style="float:right;" /> 
+                    </apex:pageBlockButtons>
+                    <apex:pageBlockSection columns="1" id="modalContactPopup" >
+                        <apex:pageBlockTable value="{!groupDetails.groupExternalContactInfoHistoryList}" var="extContactHist" rendered="{!if(groupDetails.groupExternalContactInfoHistoryList.size > 0, true, false)}" id="contHistTable">
+                            <apex:column headerValue="Contact" value="{!extContactHist.primaryContactType}"  />
+                            <apex:column headerValue="Active" value="{!extContactHist.activeStatus}"   />
+                            <apex:column headerValue="Type" value="{!extContactHist.contactType}" />
+                            <apex:column headerValue="First Name" value="{!extContactHist.firstName}" />
+                            <apex:column headerValue="Last Name" value="{!extContactHist.LastName}"  />
+                            <apex:column headerValue="From"  value="{!extContactHist.startDate}"  />
+                            <apex:column headerValue="Through"  value="{!extContactHist.endDate}" />
+                            <apex:column headerValue="Address" value="{!extContactHist.address}" />
+                            <apex:column headerValue="Phone" value="{!extContactHist.Phone}"  />
+                            <apex:column headerValue="Fax" value="{!extContactHist.Fax}"/>
+                            <apex:column headerValue="Email Address" value="{!extContactHist.EmailAddress}" />
+                        </apex:pageBlockTable>   
+                    </apex:pageBlockSection>
+                    <apex:pageBlockSection >      
+                        <apex:outputLabel styleClass="outputLabelPanel" value="There is no contact history."
+                             Rendered="{!if(groupDetails.groupExternalContactInfoHistoryList.size == 0, true, false)}"><b></b></apex:outputLabel>
+                         
+                    </apex:pageBlockSection>
+                </apex:pageBlock>
+            </div>
+
+        </apex:outputPanel>
+    </apex:outputPanel>
+    </apex:outputPanel>
+        <apex:pageblockSection id="internalgroupContactInf" columns="1" title="Group Contacts (Internal)">
+            <apex:pageBlockTable title="Primary Billing Contact" value="{!groupDetails.groupInternalContactInfoList}" var="internalContact">
+                <apex:column value="{!internalContact.primaryContactType}" headerValue="Contact"/>
+                <apex:column value="{!internalContact.firstName}" headerValue="First Name"/>
+                <apex:column value="{!internalContact.LastName}" headerValue="Last Name"/>                
+                <apex:column value="{!internalContact.Phone}" headerValue="Phone"/>
+                <apex:column value="{!internalContact.extension}" headerValue="Ext"/>
+                <apex:column value="{!internalContact.EmailAddress}" headerValue="Email Address"/>
+            </apex:pageBlockTable>
+        </apex:pageblockSection>
+        
+        <apex:pageblockSection id="productInformation" columns="1" title="Producer Information">
+            <apex:pageBlockSectionItem >
+                    <apex:pageBlockTable value="{!producerTypeBRestuls}" var="pi" columns="8"  >                                                           
+                    <apex:column > 
+                        <apex:facet name="header">
+                            <apex:outputLabel value="Assigned General Agency">                                          
+                            </apex:outputLabel>
+                        </apex:facet> 
+                         <apex:outputText value="{!pi.CompanyName}"/>                       
+                    </apex:column>
+                       <apex:column >
+                        <apex:facet name="header">
+                            <apex:outputLabel value="Producer ID">                                                     
+                            </apex:outputLabel>
+                        </apex:facet>
+                         <apex:outputText value="{!pi.ProducerID}"/>                        
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:outputLabel value="Tax ID/SSN">                                                     
+                            </apex:outputLabel>
+                        </apex:facet>
+                         <apex:outputText value="{!pi.ProducerTIN}"/>                        
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:outputLabel value="Contact">                                                   
+                            </apex:outputLabel>
+                        </apex:facet>        
+                         <apex:outputText value="{!pi.producerContact}" />                
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:outputLabel value="Address">                                                       
+                            </apex:outputLabel>
+                        </apex:facet> 
+                         <apex:outputText value="{!pi.producerCity}, {!pi.producerState}"/>                       
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:outputLabel value="Phone">                                                      
+                            </apex:outputLabel>
+                        </apex:facet> 
+                     <apex:outputText value="{!pi.producerPhoneNumber}"/>                       
+                    </apex:column>                                          
+                </apex:pageBlockTable>
+            </apex:pageBlockSectionItem>
+            <br/>
+            <apex:pageBlockSectionItem >
+            <apex:pageBlockTable value="{!producerTypeIRestuls}" var="pi" columns="8"  >                                                           
+                
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputLabel value="Broker of Record (BOR)">                                          
+                        </apex:outputLabel>
+                    </apex:facet>
+                    <apex:outputText value="{!pi.FirstName} {!pi.MiddleInitial} {!pi.LastName}"/>                        
+                </apex:column>
+                <apex:column >
+                   <apex:facet name="header">
+                    <apex:outputLabel value="Producer ID">                                                     
+                     </apex:outputLabel>
+                       </apex:facet>
+                    <apex:outputText value="{!pi.ProducerID}"/>                        
+                 </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputLabel value="Tax ID/SSN">                                                     
+                        </apex:outputLabel>
+                    </apex:facet>
+                     <apex:outputText value="{!pi.producerTIN}"/>                        
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputLabel value="Contact">                                                   
+                        </apex:outputLabel>
+                    </apex:facet> 
+                    <apex:outputText value="{!pi.producerContact}"/>                                          
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputLabel value="Address">                                                       
+                        </apex:outputLabel>
+                    </apex:facet>  
+                    <apex:outputText value="{!pi.producerCity}, {!pi.producerState}"/>                                         
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputLabel value="Phone">                                                      
+                        </apex:outputLabel>
+                    </apex:facet>         
+                    <apex:outputText value="{!pi.producerPhoneNumber}"/>                                  
+                </apex:column> 
+                                              
+                </apex:pageBlockTable>
+            </apex:pageBlockSectionItem>               
+        </apex:pageblockSection>
+                   
+        <apex:commandLink action="{!producerHistoryWindow}"
+                value="Go To Producer History" id="linkProd"
+                 style="color:Blue; margin-left:45%;"  reRender="prodHistPopup,modalWindowProducer" status="refreshMemberStatus"/>
+                 
+        <apex:pageblockSection id="employeeCountInfo" columns="1" title="Attestation / Employee Count">
+        <apex:pageBlockSectionItem >
+            <apex:pageBlockTable value="{!groupDetails.groupEmployeeCountInfoList}" var="ec"> 
+                    <apex:column value="{!ec.efectiveFrom}">
+                        <apex:facet name="header">
+                            <apex:outputLabel value="Effective From Date">                                          
+                            </apex:outputLabel>
+                        </apex:facet>                        
+                    </apex:column>
+                    <apex:column value="{!ec.effectiveThrough}" >
+                        <apex:facet name="header">
+                            <apex:outputLabel value="Effective Through Date">                                                     
+                            </apex:outputLabel>
+                        </apex:facet>                        
+                    </apex:column>
+                    <apex:column value="{!ec.fullTime}" >
+                        <apex:facet name="header">
+                            <apex:outputLabel value="Full Time">                                                     
+                            </apex:outputLabel>
+                        </apex:facet>                        
+                    </apex:column>
+                    <apex:column value="{!ec.partTime}" >
+                        <apex:facet name="header">
+                            <apex:outputLabel value="Part Time">                                                   
+                            </apex:outputLabel>
+                        </apex:facet>                        
+                    </apex:column>
+                    <apex:column value="{!ec.unionEligible}" >
+                        <apex:facet name="header">
+                            <apex:outputLabel value="Union Eligible">                                                       
+                            </apex:outputLabel>
+                        </apex:facet>                        
+                    </apex:column>
+                    
+                    <apex:column value="{!ec.totalEligible}">
+                        <apex:facet name="header">
+                            <apex:outputLabel value="Total Eligible">                                                      
+                            </apex:outputLabel>
+                        </apex:facet>                        
+                    </apex:column> 
+                    <apex:column value="{!ec.employeeAtne}" >
+                        <apex:facet name="header">
+                            <apex:outputLabel value="ATNE">                                                      
+                            </apex:outputLabel>
+                        </apex:facet>                        
+                    </apex:column> 
+                    
+                                                          
+                </apex:pageBlockTable>
+                </apex:pageBlockSectionItem>
+        </apex:pageblockSection>
+        <apex:outputPanel id="prodHistPopup">
+        <apex:outputPanel id="modalWindowProducer" rendered="{!isProdHistory}">
+
+        <apex:outputPanel styleClass="popupBackground" layout="block"  />
+        <apex:outputPanel styleClass="custPopup" layout="block" >
+            <div style="overflow: scroll; height: 400px; width: 900px">
+                <apex:pageBlock title="Producer History" >
+                    <apex:pageBlockButtons location="top">
+                        <apex:commandButton value="Close" onclick="closePopUp();" rerender="temp"
+                             style="float:right;" /> 
+                    </apex:pageBlockButtons>
+                    <apex:pageBlockSection columns="1" >
+                        <apex:pageBlockTable value="{!ProducerHistoryList}" var="prodHist" >
+                            <apex:column headerValue="From" value="{!prodHist.fromDate} " />
+                            <apex:column headerValue="Through" value="{!prodHist.through}"/>
+                            <apex:column headerValue="Producer ID"  value="{!prodHist.producerID}"/>
+                            <apex:column headerValue="Producer Name"  value="{!prodHist.producerName}"/>
+                            <apex:column headerValue="Contact Name"  value="{!prodHist.contactName}"/>
+                            <apex:column headerValue="Phone Number"  value="{!prodHist.PhoneNumber}"/>
+                        </apex:pageBlockTable>   
+                    </apex:pageBlockSection>
+                    <apex:pageBlockSection >      
+                        <apex:outputLabel styleClass="outputLabelPanel" value="No Producer History"
+                             Rendered="{!resultSize == 0}"></apex:outputLabel>
+                         
+                    </apex:pageBlockSection>
+                </apex:pageBlock>
+            </div>
+
+        </apex:outputPanel>
+    </apex:outputPanel>
+    </apex:outputPanel>
+    
+
+                 
+        <!-- case history section -->
+        <apex:pageBlockSection title="Case History ({!caseListSize})" columns="1" id="caseHistory">
+            <script>
+                var CaseHistoryTable = $('[cid$="CaseHistoryTable"]').parent('table').eq(0).DataTable({
+                    //enables results highlight
+                    searchHighlight: true,
+                    "pagingType": "full_numbers",
+                    //sets record lengths to show in picklist
+                    aLengthMenu: [
+                        [10, 25, 50, 100, 200, -1],
+                        [10, 25, 50, 100, 200, "All"]
+                    ],
+                    "iDisplayLength": 50,
+                    order: [[3, 'desc']],
+                });
+            </script>
+            <apex:pageBlockTable id="caseHistory" value="{!caseHistoryList}" var="case" html-cid="CaseHistoryTable" style="">
+                <apex:column headerValue="Case Number" style="border-bottom: 1px solid #e3deb8;" >
+                    <!--<apex:outputLink value="/{!case.Id}">{!case.CaseNumber}</apex:outputLink>-->
+                    <apex:outputLink value="#" onclick="return OpenCaseHistorySubTab('{!Case.Id}', '{!Case.CaseNumber}');">{!Case.CaseNumber}</apex:outputLink>
+                </apex:column>
+                <apex:column value="{!case.Contact.Name}" headerValue="Subject Name" style="border-bottom: 1px solid #e3deb8;" />
+                <apex:column value="{!case.CreatedBy.Name}" headerValue="Created By" style="border-bottom: 1px solid #e3deb8;" />
+                <apex:column headerValue="Created Date and Time" >
+                    <apex:outputText value="{0,date,M/d/yyyy HH:mm}">
+                        <apex:param value="{!case.CreatedDate}" />
+                    </apex:outputText>
+                </apex:column>
+                <apex:column value="{!case.Topic__c}" headerValue="Topic" style="border-bottom: 1px solid #e3deb8;" />
+                <apex:column headerValue="Fulfillment">
+                      <apex:outputText value="Y" rendered="{!IF(case.create_letters__r.size > 0,true, false)}"/>
+                        <apex:outputText value="" rendered="{!IF(case.create_letters__r.size > 0,false, true)}"/>
+                    </apex:column>
+
+                <apex:column value="{!case.Status}" headerValue="Status" style="border-bottom: 1px solid #e3deb8;" />
+                <apex:column value="{!case.Originator_Type__c}" headerValue="Originator Type" style="border-bottom: 1px solid #e3deb8;" />
+                <apex:column value="{!case.Interaction_Type__c}" headerValue="Interaction Type" style="border-bottom: 1px solid #e3deb8;" />
+                <apex:column value="{!case.Interaction__c}" headerValue="Interaction ID" style="border-bottom: 1px solid #e3deb8;" />
+                
+            </apex:pageBlockTable>
+        </apex:pageBlockSection>  
+                
+     </apex:pageBlock> 
+   </apex:form>
+   <script>
+        var vccdParamsStr = '{!$CurrentPage.parameters.vccdParams}';
+        if(vccdParamsStr){
+            var vccdParams =  JSON.parse(vccdParamsStr);
+            $("#callTopicType").val(vccdParams.callTopic);
+        }
+   </script>
+   
+   </apex:page>

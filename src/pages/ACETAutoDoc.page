@@ -1,0 +1,5 @@
+<apex:page standardController="Case">
+    <apex:pageBlock mode="mainDetail">
+      <apex:outputText escape="false" value="{!Case.AutoDoc__c}"/>
+    </apex:pageBlock>
+</apex:page>

@@ -1,0 +1,18 @@
+<apex:page standardController="Case" sidebar="false" showHeader="false" extensions="ACETMemberLevelExceptionFormController" action="{!getloggedinProfileName}">
+    <apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+    <apex:includeScript value="/support/console/38.0/integration.js" />
+    <script>
+    function opensubtab()
+    {
+        var isActive = true;
+        sforce.console.getFocusedPrimaryTabId(function(result){
+            var url = '/apex/ACETMemberLevelExceptionForm?id={!case.id}';
+            sforce.console.openSubtab(result.id , url, isActive,'Member Level Exceptions', null);
+        });
+    
+    }
+    </script>
+    <apex:form rendered="{!RRUser}" >
+        <center><apex:commandLink value="Launch Member Exception Form" style="color:blue" onclick="opensubtab(); return false;"/> </center>
+    </apex:form>
+</apex:page>

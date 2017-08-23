@@ -1,0 +1,246 @@
+<apex:page controller="ACETConsumerAccountsController" sidebar="false">
+    <apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+    <apex:includeScript value="/support/console/30.0/integration.js" />
+    <apex:includeScript value="{!$Resource.JqueryDynamicCallTypesValidation}" />
+    <apex:pageMessages />
+    <apex:form >
+        <c:ACETInteractionHighlightsPanel InteractionAtt="{!wrapper.interaction}"
+            SubjectAtt="{!wrapper.Subject}"
+            AdditionalInfoAtt="{!wrapper.AdditionalInfo}" html-auto-doc="auto"></c:ACETInteractionHighlightsPanel>
+        <apex:outputPanel rendered="{!!isCancelCaseCreation}">
+            <apex:sectionHeader title="Consumer Accounts" />
+            <c:ACETCaseActions attrCaseDataWrapper="{!wrapper}"
+                attrShowSaveAndCloseButton="false" attrShowSaveButton="true"
+                attrShowMisdirectButton="true" 
+                attrSourceOriginator="{!wrapper.SourceOriginator}"
+                attrInteractionId="{!wrapper.Interaction.Id}"
+                attrSubjectId="{!wrapper.Subject.Id}"
+                attrCallTopic="Consumer Accounts" rendered="{!notResearchUser}" />
+            <apex:pageBlock >
+                <apex:pageblockSection columns="1" id="launchCirrusPanel">
+                    <apex:pageBlockSectionItem >
+                        <input type="button" id="launchCirrusBtn"
+                            style="margin-left: 44%;" value="Launch Consumer Accounts"
+                            onclick="openCirrusWindow();" />
+                    </apex:pageBlockSectionItem>
+                </apex:pageblockSection>
+                
+                <!-- Below component Added by Divya - US564097 -->
+                <c:ACETDynamicCallTypesDisplay attrCaseDataWrapper="{!wrapper}" 
+                                               attrCallTopic="{!wrapper.caseobj.Topic__c}" 
+                                               attrshowAccountType="true"
+                                               attrShowPickListcallTypes="false"
+                                               attrShowCheckBoxCallTypes="true"/>
+                
+                <apex:pageblockSection columns="1" id="inputPanel"
+                    html-auto-doc="auto">
+                    <!-- <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Account Type"></apex:outputLabel>
+                        <apex:selectCheckboxes id="accountTypes"
+                            value="{!wrapper.accountType}" layout="pageDirection">
+                            <apex:selectOptions value="{!AccountTypes}"></apex:selectOptions>
+                        </apex:selectCheckboxes>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Call Type"></apex:outputLabel>
+                        <apex:selectCheckboxes id="topic" value="{!wrapper.Topic}"
+                            layout="pageDirection">
+                            <apex:selectOptions value="{!Topics}"></apex:selectOptions>
+                        </apex:selectCheckboxes>
+                    </apex:pageBlockSectionItem> -->
+                    <apex:pageBlockSectionItem html-auto-doc-item="false">
+                        <apex:outputLabel value="Comments"></apex:outputLabel>
+                        <apex:inputTextArea id="comments" cols="100" rows="5"
+                            value="{!wrapper.Comments}"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="System Unavailable"></apex:outputLabel>
+                        <apex:inputCheckbox id="sysUnavailableChkb"
+                            style="margin-left:10px;" value="{!wrapper.isSystemUnavailable }" />
+                    </apex:pageBlockSectionItem>
+                </apex:pageblockSection>
+
+                <!-- <apex:pageblockSection id="reasonPanel">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Cancel Reason"></apex:outputLabel>
+                    <apex:selectList id="reasons"  size="1" value="{!wrapper.cancelReason}" multiselect="false" >
+                        <apex:selectOptions value="{!CancelReasons}"></apex:selectOptions>
+                    </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                 </apex:pageblockSection>  -->
+                <!--<apex:pageBlockButtons location="bottom">   
+                <apex:commandButton value="Clear" onclick="form.reset()"/>
+                <apex:commandButton value="Cancel" action="{!renderCancelCaseSection}"/>
+                <apex:commandButton id="saveReasonBtn" value="Save" onclick="return saveReason();"/>
+            </apex:pageBlockButtons> -->
+            </apex:pageBlock>
+        </apex:outputPanel>
+        <c:ACETCaseActions attrCaseDataWrapper="{!wrapper}"
+            attrShowSaveAndCloseButton="false" attrShowSaveButton="true"
+            attrShowMisdirectButton="true" 
+            attrSourceOriginator="{!wrapper.SourceOriginator}"
+            attrInteractionId="{!wrapper.Interaction.Id}"
+            attrSubjectId="{!wrapper.Subject.Id}"
+            attrCallTopic="Consumer Accounts" rendered="{!notResearchUser}" 
+            attrLocation="bottom"/>
+    </apex:form>
+    <script>
+    $(document).ready(function() {
+        acet.autodoc.startAutodoc(); 
+        addRequiredFieldIndicator("[id$='pbTableId']");
+        addRequiredFieldIndicator("[id$='accountTypes']");
+        systemUnavailableListener("[id$='sysUnavailableChkb']");
+        checkCallTypeOther(".autodoc input[type=checkbox]");
+        checkCallTypeResolved(".autodoc-case-item-resolved input[type=checkbox]");    
+    });
+    /*$(document).ready(function() {  
+            acet.autodoc.startAutodoc();
+            addRequiredFieldIndicator();        
+            $("[id$='reasonPanel']").css("display","none");
+            $("[id$='saveReasonBtn']").css("display","none");
+            $("[id$='sysUnavailableChkb']").click(function(){
+                //when checked make other fields non-mandatory
+                if($(this).prop("checked")){
+                    console.log('Entering the Console 1');
+                    $(".requiredInput").removeClass('requiredInput');
+                    $(".reqInputclass").removeClass('reqInputclass');
+                    $(".errorMsg").remove();
+                }else{
+                    console.log('Entering the Console 11');
+                    addRequiredFieldIndicator();
+                }
+            });  
+        });
+        
+        function addRequiredFieldIndicator(){
+            console.log('Entering the Console 2');
+            $("[id$='callTypeCategories']").wrap('<div class="requiredInput"></div>').parent().prepend('<div class="requiredBlock"></div>');
+            $("[id$='comments']").wrap('<div class="requiredInput" ></div>').parent().prepend('<div class="requiredBlock" style="margin-left:10px;"></div>');
+            $("[id$='accountTypes']").wrap('<div class="requiredInput"></div>').parent().prepend('<div class="requiredBlock"></div>');        
+        }
+        
+        function saveReason(){
+            $(".errorMsg").remove();
+            var errorMsg = "You must enter a value."; 
+            var returnFlag  = true;
+           //alert($("[id$='reasons']").val() == '' + " :: " + $("[id$='reasons']").val() == null +" :: " + $("[id$='reasons']").val().length < 1);
+            if($("[id$='reasons']").val() == '' || $("[id$='reasons']").val() == null || $("[id$='reasons']").val().length < 1){
+             
+                $("[id$='reasons']").parent().append('<div class = "errorMsg" id = "cancelResonError"><strong>Error:</strong> ' + errorMsg + '</div>');  
+                returnFlag  = false;
+            }        
+            return false;
+        }
+        function closeCurrentTab(){
+            sforce.console.getFocusedPrimaryTabId(function(result){
+                var tabId = result.id;
+                sforce.console.closeTab(tabId);
+            });     
+        }
+         
+        /** function showCancelPanel(){
+           $("[id$='reasonPanel']").css("display","block"); 
+           $("[id$='inputPanel']").css("display","none");
+           $("[id$='launchCirrusPanel']").css("display","none");
+           $("[id$='reasons']").wrap('<div class="requiredInput"></div>').parent().prepend('<div class="requiredBlock"></div>');  
+           $("input.btn").css("display","none");
+            $("[id$='saveReasonBtn']").css("display","block");
+           return false;          
+           }**/
+        function checkCirrusSystem(){
+            var systemAvailable = false;
+            $.ajax({
+                type : "Get",
+                url : 'https://cirrus-dev.optum.com/index.html',
+                data : {},
+                success : function(result,status,xhr) {
+                    if(xhr.status = '200'){
+                     systemAvailable = true;
+                    }
+                    $("#cirrusPanel").css("margin-left","0%");
+                    $("#cirrusPanel").css("overflow","scroll");
+                    $("#cirrusPanel").html('');
+                },
+                error : function(xhr,status,error) {
+                    systemAvailable = false;
+                    $("#cirrusPanel").addClass("pbError").append("<div>Error : Cirrus is down.</div>");
+                    
+                }
+    
+            });
+            return systemAvailable ;        
+        }
+        function openCirrusWindow(){
+            window.open('https://cirrus-dev.optum.com/index.html', 'asdas', 'toolbars=0,width=1200,height=800,left=0,top=0,scrollbars=1,resizable=1');        
+        }
+    /*function validate(){
+
+            var checkedAccountTypes = $("[id*='accountTypes:']:checked").map(function() {
+                                                            return this.value;
+                                                        }).get();
+            var checkedTopics = $("[id*='callTypeCategories:']:checked").map(function() {
+                                                            return this.value;
+                                                        }).get();                                                     
+    
+            var isSystemUnavailable = $("[id$='sysUnavailableChkb']").prop("checked");
+            if(isSystemUnavailable){
+                $(".errorMsg").remove();
+                acet.autodoc.saveAutodoc(); 
+                return true;
+            }
+            
+            $(".errorMsg").remove();
+            var returnFlag = true;
+            var errorMsg = "You must enter a value."; 
+                if($("[id$='comments']").val() == '' || $("[id$='comments']").val().length < 1){
+                    $("[id$='comments']").parent().append('<div class = "errorMsg" style = "margin-left:10px"><strong>Error:</strong> ' + errorMsg + '</div>');  
+                    returnFlag  = false;
+                }
+               // if($("[id$='topic']").val() == '' || $("[id$='topic']").val() == null || $("[id$='topic']").val().length < 1){
+               if(checkedTopics == null || checkedTopics == '' ){
+                    $("[id$='callTypeCategories']").parent().append('<div class = "errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');  
+                    returnFlag  = false;
+                }           
+               // if($("[id$='accountTypes']").val() == '' || $("[id$='accountTypes']").val() == null || $("[id$='accountTypes']").val().length < 1){
+               if(checkedAccountTypes == null || checkedAccountTypes == '' ){
+                    $("[id$='accountTypes']").parent().append('<div class = "errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');  
+                    returnFlag  = false;
+                }
+                
+                if(returnFlag){                
+                    acet.autodoc.saveAutodoc();                        
+                }
+                
+                return returnFlag;
+        }  */  
+        
+    </script>
+    <style type="text/css">
+        table[role="presentation"] {
+            background: #FFF;
+            padding: 0 10px;
+            width: 30%;
+        }
+        .imgclass:hover {
+            background-image: url('/img/help/helpOrbs.gif');
+            background-repeat: no-repeat;
+            width: 16px;
+            height: 15px;
+            background-position: right;
+        }
+        .imgclass {
+            background-image: url('/img/help/helpOrbs.gif');
+            background-repeat: no-repeat;
+            width: 16px;
+            height: 15px;
+        }
+    </style>
+    <!-- <apex:outputPanel rendered="{!isCancelCaseCreation}">
+       <!-- <c:ACETMemberOpenTopicCancelComponent interactionId="{!wrapper.Interaction.Id}" contactId="{!wrapper.Subject.Id}" callTopic="Consumenr Accounts" AdditionalInfoWrap="{!wrapper.AdditionalInfo}"/>-->
+    <!-- <c:ACETMemberOpenTopicCancelComponent interactionId="{!wrapper.interaction.Id}" contactId="{!wrapper.subject.Id}" callTopic="Consumenr Accounts" OriginatorRelationship="{!wrapper.additionalInfo.OriginatorRelationship}" />
+        <!--<apex:include pageName="/apex/ACETMemberOpenTopicCancel"/>-->
+    <!--  </apex:outputPanel>-->
+    <!--<apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/main.js')}"/>-->
+    <!--<apex:includeScript value="{!$Resource.ACETResources1JS}"/>-->
+    <apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/main.js')}" />
+</apex:page>

@@ -1,0 +1,309 @@
+<apex:page controller="ACETGroupPlanBenefitDetailController"
+    sidebar="false" action="{!init}">
+
+    <apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+    <apex:stylesheet value="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+    <apex:stylesheet value="{!URLFOR($Resource.ACETResources, '/css/m/memberdetail.css')}" />
+    <apex:includeScript value="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></apex:includeScript>
+    <style>
+        .alignTitle{background-color:#f2f3f3 !important;text-align:center !important;}
+        .alignTitleWO{background-color:#f2f3f3 !important;border-bottom:none !important;text-align:center !important;}
+        .norm-pbs{background-color: #ddd !important;border: 1px solid #ccc;color: #000 !important;text-align: center;width:40%;}
+        .white-bg{background-color:white !important;text-align:center !important;}
+        .highlightFont{font-weight: bold;}
+        .headerResultStyle {font-size: 15px;font-weight: Bold;} 
+    </style>
+    <script>
+      $(document).ready(function() {
+            //acet.autodoc.startAutodoc();
+            acet.autodoc.createCommentsbox();
+            console.log('Allowing............');
+            document.getElementById('defaultOpen').click();
+            $('[id$=pbs-individual] .pbSubheader').addClass('norm-pbs');
+            $('[id$=pbs-family] .pbSubheader').addClass('norm-pbs');
+            //document.getElementById('tabOne').style.display = "block";
+            //when Group Plan result tab is focused, send over Group Plan detail autodoc
+            var subjectId = '{!wrapper.Originator.Id}';
+            console.log('Allowing............'+subjectId);
+            sforce.console.addEventListener('RequestGroupPlanDetail_'.concat(subjectId), function(r){ 
+                sforce.console.getEnclosingTabId(function(result){ 
+                    console.log('Allowing2............');                                       
+                    var res = {};   
+                    res.subTabId = result.id;           
+                    res.doc = acet.autodoc.saveAutodoc();                                                  
+                    sforce.console.fireEvent('ReceiveGroupPlanDetail_'.concat(subjectId), JSON.stringify(res)); 
+                }); 
+                                                       
+            });             
+            
+          //close self when requested from view auth page
+            sforce.console.addEventListener('CloseGroupPlanSubTab_'.concat(subjectId), function(r){
+                alert('Allowing3............');   
+                sforce.console.getEnclosingTabId(function(result){
+                    sforce.console.closeTab(result.id);        
+                });
+            });
+
+             $("[id$='btnSaveNClose']").on('click', function(){                  
+                   closeSubtabs();
+             });
+             $("[id$='btnSaveCase']").on('click', function(){
+                   console.log('Save >>>>>>>>>>>>>>.');
+                   closeSubtabs();
+             }); 
+             $("[id$='btnCancelCase']").on('click', function(){                  
+                 closeSubtabs();
+             }); 
+             $("[id$='btnMisdirectCase']").on('click', function(){                  
+                 closeSubtabs();
+             });
+             
+             //document.getElementById('defaultOpen').click();
+             
+      }); 
+      
+    
+      //Function to track the number of subtabs opened from the current page
+        var openedTabs = function openedTabs(result) {
+        console.log(">>>>>> "+result.success);
+            //Report whether we succeeded in opening the subtab
+            if (result.success) {
+                subtabIds.push(result.id);
+                //alert('subtab opened'+ subtabIds);
+            } else {
+                //alert('subtab cannot be opened');
+            }
+        };
+         
+        //Function to close all subtabs
+        function closeSubtabs(){
+            console.log('Testing');
+            for(i = 0 ; i < subtabIds.length ; i++){
+                sforce.console.closeTab(subtabIds[i]);
+            }
+        }
+        
+         function openBenefitTab(evt, tabName) {
+           
+            if(tabName == 'tabOne') {
+                document.getElementById('defaultOpen').style.backgroundColor = "#85c1e9";
+                document.getElementById('defaultOpenTwo').style.backgroundColor = "#b2babb";
+            }
+            else {
+                document.getElementById('defaultOpenTwo').style.backgroundColor = "#85c1e9";
+                document.getElementById('defaultOpen').style.backgroundColor = "#b2babb";
+            }
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+    </script>
+    
+    <apex:form >
+        <apex:actionFunction action="{!benefitDetailsTabClick}" name="OONCallWebservice" rerender="individualId,familyId" status="refreshMemberStatus1"/>
+       
+        <apex:outputPanel id="hlPanel" layout="none">
+            <apex:inputHidden id="highlightPanelInfo" />
+            <c:ACETInteractionHighlightsPanel InteractionAtt="{!Interaction}" SubjectAtt="{!Subject}" AdditionalInfoAtt="{!AdditionalInfo}" html-auto-doc="auto"/>
+        </apex:outputPanel>
+        <apex:actionStatus id="refreshMemberStatus1">
+            <apex:facet name="start">
+            <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                &nbsp;
+            </div>
+            <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                    <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                    <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                </div>
+            </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:sectionHeader title="Bundle and Rates" />
+        <br/><br/>
+        
+        <span class="tablinks" onclick="openBenefitTab(event, 'tabOne')" id="defaultOpen" style="font-size: 102%; border-radius: 3%; background-color: rgb(125, 126, 240); padding: 1%; font-weight: bold;">Bundle and Rates</span>
+        <span class="tablinks" onclick="openBenefitTab(event, 'tabTwo');OONCallWebservice();" id="defaultOpenTwo" style="font-size: 102%; border-radius: 3%; background-color: rgb(125, 126, 240); padding: 1%; font-weight: bold;">Benefit Details</span>
+        
+        <br/><br/>
+        <div id="tabOne" class="tabcontent">
+            <apex:pageBlock mode="mainDetail" id="maindetailPageBlock">
+                <apex:pageBlockSection id="groupPlan" columns="3"
+                    title="Plan Summary" html-auto-doc="true" collapsible="true">
+                    <apex:pageBlockSectionItem dataStyle="width:16.6%"
+                        labelStyle="width:16.6%">
+                        <apex:outputLabel value="Benefit Bundle Option ID" for="policyNo" />
+                        <apex:outputText value="{!ACETGroupPlanDetail.PolicyNo}"
+                            id="policyNo" />
+                    </apex:pageBlockSectionItem>
+        
+                    <apex:pageBlockSectionItem dataStyle="width:16.6%"
+                        labelStyle="width:16.6%">
+                        <apex:outputLabel value="PCP" for="pcpRequired" />
+                        <apex:outputText value="{!ACETGroupPlanDetail.PCPRequired}"
+                            id="pcpRequired" />
+                    </apex:pageBlockSectionItem>
+        
+                    <apex:pageBlockSectionItem dataStyle="width:16.6%"
+                        labelStyle="width:16.6%">
+                        <apex:outputLabel value="Network" for="network" />
+                        <apex:outputText value="{!ACETGroupPlanDetail.Network}"
+                            id="network" />
+                    </apex:pageBlockSectionItem>
+        
+                    <apex:pageBlockSectionItem dataStyle="width:16.6%"
+                        labelStyle="width:16.6%">
+                        <apex:outputLabel value="Plan ID" for="PlanID" />
+                        <apex:outputText value="{!ACETGroupPlanDetail.planID}" id="PlanID" />
+                    </apex:pageBlockSectionItem>
+        
+                    <apex:pageBlockSectionItem dataStyle="width:16.6%"
+                        labelStyle="width:16.6%">
+                        <apex:outputLabel value="Product" for="product" />
+                        <apex:outputText value="{!ACETGroupPlanDetail.Product}"
+                            id="product" />
+                    </apex:pageBlockSectionItem>
+        
+                    <apex:pageBlockSectionItem dataStyle="width:16.6%"
+                        labelStyle="width:16.6%">
+                        <apex:outputLabel value="Billing Tier" for="tier" />
+                        <apex:outputText value="{!ACETGroupPlanDetail.Tier}" id="tier" />
+                    </apex:pageBlockSectionItem>
+        
+                    <apex:pageBlockSectionItem dataStyle="width:16.6%"
+                        labelStyle="width:16.6%">
+                        <apex:outputLabel value="Plan Class/Carve Out" for="planClass" />
+                        <apex:outputText value="{!ACETGroupPlanDetail.PlanClass}"
+                            id="planClass" />
+                    </apex:pageBlockSectionItem>
+        
+                    <apex:pageBlockSectionItem dataStyle="width:16.6%"
+                        labelStyle="width:16.6%">
+                        <apex:outputLabel value="Accumulator" for="accum" />
+                        <apex:outputText value="{!ACETGroupPlanDetail.Accumulator}"
+                            id="accum" />
+                    </apex:pageBlockSectionItem>
+        
+                    <apex:pageBlockSectionItem dataStyle="width:16.6%"
+                        labelStyle="width:16.6%">
+                        <apex:outputLabel value="Effective Date" for="effectDate" />
+                        <apex:outputText value="{!ACETGroupPlanDetail.effecDate}"
+                            id="effectDate" />
+                    </apex:pageBlockSectionItem>
+        
+                    <apex:pageBlockSectionItem dataStyle="width:16.6%"
+                        labelStyle="width:16.6%">
+                        <apex:outputLabel value="Gated(Y/N)" for="gated" />
+                        <apex:outputText value="{!ACETGroupPlanDetail.Gated}" id="Gated" />
+                    </apex:pageBlockSectionItem>
+        
+                    <apex:pageBlockSectionItem dataStyle="width:16.6%"
+                        labelStyle="width:16.6%">
+                        <apex:outputLabel value="Plan Metallic Level"
+                            for="planMettalicLevel" />
+                        <apex:outputText value="{!ACETGroupPlanDetail.PlanMettalicLevel}"
+                            id="planMettalicLevel" />
+                    </apex:pageBlockSectionItem>
+        
+                    <apex:pageBlockSectionItem dataStyle="width:16.6%"
+                        labelStyle="width:16.6%">
+                        <apex:outputLabel value="End Date" for="endDate" />
+                        <apex:outputText value="{!ACETGroupPlanDetail.endDate}"
+                            id="endDate" />
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+        
+                <apex:pageBlockSection id="rider" columns="1" Title="Rider Info"
+                    html-auto-doc="true">
+                    <apex:pageBlockTable value="{!riderList}" var="rider"
+                        captionStyle="text-align:left;margin-bottom:3px;" rendered="{!NOT(ISNULL(riderList)) && riderList.size > 0}">
+                        <apex:column value="{!rider.BenefitCode}" headerValue="Rider Code" />
+                        <apex:column value="{!rider.BenefitType}" headerValue="Description" />
+                        <apex:column value="{!rider.BenefitFrom}" headerValue="From" />
+                        <apex:column value="{!rider.BenefitThru}" headerValue="Thru"/>
+                    </apex:pageBlockTable>
+                   <apex:pageBlockTable value="{!riderList}" var="r"
+                        rendered="{!(ISNULL(riderList))}">
+                       <apex:column headerValue=" No results found." width="100%"/>
+                   </apex:pageBlockTable> 
+                </apex:pageBlockSection>
+        
+                <apex:pageBlockSection id="AgeBanded" title="Plan Rates" html-auto-doc="true" rendered="{!ageBandedBool}" columns="6" >
+                   <apex:panelGrid columns="6" border="0" style="float:left;width:195%;">
+                   
+                        <apex:pageBlockTable value="{!AgeBandBelow20List}" var="ageBand30" headerClass="alignTitle" >
+                            <apex:facet name="header">Age Band (21 to 30)</apex:facet>
+                            <apex:column headerValue="Age Band" value="{!ageBand30.AgeBand}" styleClass="white-bg" rendered="{!NOT(ISNULL(AgeBandBelow20List)) && AgeBandBelow20List.size > 0}"/>
+                            <apex:column headerValue="Premium" value="{!ageBand30.premium}" styleClass="white-bg" rendered="{!NOT(ISNULL(AgeBandBelow20List)) && AgeBandBelow20List.size > 0}"/>
+                            <apex:column headerValue=" No results found." width="100%" headerClass="white-bg" rendered="{!(ageBandBelow20List.Size) == 0}"/>
+                        </apex:pageBlockTable>
+                        
+                        <apex:pageBlockTable value="{!ageBandBelow30List}" var="ageBand30" headerClass="alignTitle">
+                            <apex:facet name="header">Age Band (31 to 40)</apex:facet>
+                            <apex:column headerValue="Age Band" value="{!ageBand30.AgeBand}" styleClass="white-bg" rendered="{!NOT(ISNULL(ageBandBelow30List)) && ageBandBelow30List.size > 0}"/>
+                            <apex:column headerValue="Premium" value="{!ageBand30.premium}" styleClass="white-bg" rendered="{!NOT(ISNULL(ageBandBelow30List)) && ageBandBelow30List.size > 0}"/>
+                            <apex:column headerValue=" No results found." width="100%" headerClass="white-bg" rendered="{!(ageBandBelow30List.Size) == 0}"/>
+                        </apex:pageBlockTable>
+
+                         <apex:pageBlockTable value="{!ageBandBelow40List}" var="ageBand40" headerClass="alignTitle">
+                            <apex:facet name="header">Age Band (41 to 50)</apex:facet>
+                            <apex:column headerValue="Age Band" value="{!ageBand40.AgeBand}" styleClass="white-bg" rendered="{!NOT(ISNULL(ageBandBelow40List)) && ageBandBelow40List.size > 0}"/>
+                            <apex:column headerValue="Premium" value="{!ageBand40.premium}" styleClass="white-bg" rendered="{!NOT(ISNULL(ageBandBelow40List)) && ageBandBelow40List.size > 0}"/>
+                            <apex:column headerValue=" No results found." width="100%" headerClass="white-bg" rendered="{!(ageBandBelow40List.Size) == 0}"/>
+                        </apex:pageBlockTable>
+                      
+                        <apex:pageBlockTable value="{!ageBandBelow50List}" var="ageBand50" headerClass="alignTitle">
+                            <apex:facet name="header">Age Band (51 to 60)</apex:facet>
+                            <apex:column headerValue="Age Band" value="{!ageBand50.AgeBand}" styleClass="white-bg" rendered="{!NOT(ISNULL(ageBandBelow50List)) && ageBandBelow50List.size > 0}"/>
+                            <apex:column headerValue="Premium" value="{!ageBand50.premium}" styleClass="white-bg" rendered="{!NOT(ISNULL(ageBandBelow50List)) && ageBandBelow50List.size > 0}"/>
+                            <apex:column headerValue=" No results found." width="100%" headerClass="white-bg" rendered="{!(ageBandBelow50List.Size) == 0}"/>
+                        </apex:pageBlockTable>
+                        
+                         <apex:pageBlockTable value="{!ageBandBelow60List}" var="ageBand60" headerClass="alignTitle">
+                            <apex:facet name="header">Age Band (60+)</apex:facet>
+                            <apex:column headerValue="Age Band" value="{!ageBand60.AgeBand}" styleClass="white-bg" rendered="{!NOT(ISNULL(ageBandBelow60List)) && ageBandBelow60List.size > 0}"/>
+                            <apex:column headerValue="Premium" value="{!ageBand60.premium}" styleClass="white-bg" rendered="{!NOT(ISNULL(ageBandBelow60List)) && ageBandBelow60List.size > 0}"/>
+                            <apex:column headerValue=" No results found." width="100%" headerClass="white-bg" rendered="{!(ageBandBelow60List.Size) == 0}"/>
+                        </apex:pageBlockTable>
+                        
+                    </apex:panelGrid>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+        </div>
+        <div id="tabTwo" class="tabcontent">
+            <apex:pageBlock mode="mainDetail" id="maindetailPageBlock1">
+                <apex:pageBlockSection title="Coverage Overview" > 
+                    <apex:pageBlockTable value="{!coPayListDummy}" var="cp" headerClass="alignTitleWO" style="width:64%;">
+                        <apex:facet name="header">Copay</apex:facet>
+                        <apex:column value="{!cp.label}" style="width:11%;padding-left:12%;font-weight: bold;text-align: left;"/>
+                        <apex:column value="{!cp.value}" style="width:10%;text-align: center"/>
+                    </apex:pageBlockTable>
+                    <br/>
+                    <apex:pageBlockTable value="{!individualFinalList}" var="i" headerClass="alignTitle" id="individualId">
+                        <apex:facet name="header">Individual</apex:facet>
+                        <apex:column value="{!i.rowLabel}" headerClass="white-bg" styleClass="white-bg highlightFont"/>
+                        <apex:column value="{!i.dedLimit}" headerValue="Ded Limit" headerClass="white-bg" styleClass="white-bg"/>
+                        <apex:column value="{!i.OOPLimit}" headerValue="OOP Limit" headerClass="white-bg" styleClass="white-bg"/>
+                    </apex:pageBlockTable> 
+                    <br/>
+                    <apex:pageBlockTable value="{!familyFinalList}" var="fd" headerClass="alignTitle" id="familyId">
+                        <apex:facet name="header">Family</apex:facet>
+                        <apex:column value="{!fd.rowLabel}" headerClass="white-bg" styleClass="white-bg highlightFont"/>
+                        <apex:column value="{!fd.dedLimit}" headerValue="Ded Limit" headerClass="white-bg" styleClass="white-bg"/>
+                        <apex:column value="{!fd.OOPLimit}" headerValue="OOP Limit" headerClass="white-bg" styleClass="white-bg"/>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>  
+        <br/>
+        </div> 
+    </apex:form>
+    <apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/main.js')}" />
+</apex:page>

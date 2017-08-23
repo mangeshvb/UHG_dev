@@ -1,0 +1,400 @@
+<apex:page sidebar="False" controller="ACETDocumentController" id="pageid" docType="html-5.0" action="{!fetchDoc}">
+	<apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+    <apex:stylesheet value="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+    <apex:includeScript value="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></apex:includeScript>
+	<apex:includeScript value="/support/console/38.0/integration.js" />
+    
+   
+    <style>
+    	.custPopupAddDoc {
+        background-color: white;
+        border-width: 2px;
+        border-style: solid;
+        z-index: 9999;
+        left: 30%;
+        padding: 10px;
+        position: absolute;
+        margin-left: -250px;
+        top: 50px;
+        }
+        
+        .popupBackgroundAddDoc { 
+        background-color: black;
+        opacity: 0.20; 
+        filter: alpha(opacity = 20);
+        position: absolute;
+        width: 100%;
+        height: 1000%;
+        top: 0;
+        left: 0;
+        z-index: 9998;
+        }
+                        
+	    .cover {
+	        border: none;
+	        position: absolute;
+	        top: 0;
+	        left: 0;
+	        height: 100%;
+	        width: 100%;
+	        z-index: -1;
+	    }
+		
+    </style>
+	<script>
+	function sendStatus(){
+		console.log('inside the emthod');
+		sforce.console.getEnclosingTabId(function(result){                                        
+            var res = {};   
+            res.subTabId = result.id;
+            console.log('1st***'+$("[id$='reStatus']").val());
+            console.log('2nd***'+$("[id$='redatetime']").val());
+            res.status =  $("[id$='reStatus']").val();
+            res.resDate = $("[id$='redatetime']").val();
+            //res.status = 'Accepted';
+            res.selectedDocId = '{!JSENCODE(documentId)}'; 
+            sforce.console.fireEvent('ReceiveDocumentStatus_', JSON.stringify(res));
+            console.log('inside '); 
+      	}); 
+        
+    }
+    
+     function validatePopUpForm(){
+        $("[id$='organization']").parent().find(".errorMsg").remove();
+        $("[id$='firstName']").parent().find(".errorMsg").remove();
+        $("[id$='lastName']").parent().find(".errorMsg").remove();
+        $("[id$='Address1']").parent().find(".errorMsg").remove();
+        $("[id$='Address2']").parent().find(".errorMsg").remove();
+        $("[id$='City']").parent().find(".errorMsg").remove();
+        $("[id$='State']").parent().find(".errorMsg").remove();
+        $("[id$='organization']").parent().find(".errorMsg").remove();
+        $("[id$='ZipCode']").parent().find(".errorMsg").remove();
+          
+        
+            var errorMsg = "You must enter a value.";
+           
+            var returnFlag = true;
+             if($("[id$='organization']").val() == '' && ($("[id$='firstName']").val() == '' || $("[id$='lastName']").val() == '' )){
+                $("[id$='firstName']").parent().append('<div class="errorMsg" id = "errorTopicBlank"><strong>Error:</strong> ' + errorMsg + '</div>');
+                $("[id$='organization']").parent().append('<div class="errorMsg" id = "errorTopicBlank"><strong>Error:</strong> ' + errorMsg + '</div>');
+                $("[id$='lastName']").parent().append('<div class="errorMsg" id = "errorTopicBlank"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+                returnFlag = false;
+            }
+            if($("[id$='Address1']").val() == ''){
+                $("[id$='Address1']").parent().append('<div class="errorMsg" id = "errorTopicBlank"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+                returnFlag = false;
+            }
+            if($("[id$='City']").val() == ''){
+                $("[id$='City']").parent().append('<div class="errorMsg" id = "errorTopicBlank"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+                returnFlag = false;
+            }
+            if($("[id$='State']").val() == ''){
+                $("[id$='State']").parent().append('<div class="errorMsg" id = "errorTopicBlank"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+                returnFlag = false;
+            }
+            if($("[id$='ZipCode']").val() == ''){
+                $("[id$='ZipCode']").parent().append('<div class="errorMsg" id = "errorTopicBlank"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+                returnFlag = false;
+            }
+            
+            return returnFlag;
+    
+    }
+    function resendform(){
+    	console.log('inside the resend form');
+        if(validatePopUpForm()){
+        	console.log('validate');
+            btnSubmit();
+            //sendStatus();
+        }
+    }
+    function isNumberKey(evt){
+	    var charCode = (evt.which) ? evt.which : event.keyCode
+	    if (charCode > 31 && (charCode < 48 || charCode > 57))
+	        return false;
+	    return true;
+	}
+	
+	function b64toBlob(b64Data, contentType, sliceSize) {
+	  	contentType = contentType || '';
+	  	sliceSize = sliceSize || 512;
+	
+	  	var byteCharacters = atob(b64Data);
+	  	var byteArrays = [];
+	
+	  	for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+		    var slice = byteCharacters.slice(offset, offset + sliceSize);
+		
+		    var byteNumbers = new Array(slice.length);
+		    for (var i = 0; i < slice.length; i++) {
+		      byteNumbers[i] = slice.charCodeAt(i);
+		    }
+		
+		    var byteArray = new Uint8Array(byteNumbers);
+		
+		    byteArrays.push(byteArray);
+	  	}
+	
+	  	var blob = new Blob(byteArrays, {type: contentType});
+	  	return blob;
+	}
+	
+	
+	
+	function downloadDoc(){
+		if(window.navigator.msSaveOrOpenBlob) {        	
+        	var docId = '{!$CurrentPage.parameters.DocId}';
+        	var contentType = '{!$CurrentPage.parameters.docContentType}';
+        	var attachmentId = '{!AttachmentId}';
+        	
+        	//for test data
+        	var fileName = 'aaa';  
+        	     	
+        	if(docId == '0902b1fc800d990d'){
+        		filename = docId + '.docx';
+        	}else if(docId == '0902b1fc800c1f2b'){
+        		filename = docId + '.pdf';	
+        	}else if(docId == '0902b1fc800d92b8'){
+        		filename = docId + '.txt';	
+        	}else if(docId == '0902b1fc800d95ba'){
+        		filename = docId + '.jpeg';	
+        	}else if(docId == '0902b1fc800c1dd0'){
+        		filename = docId + '.pdf';	
+        	}else if(docId == '0902b1fc801297ae'){
+        		filename = docId + '.dox';	
+        	}else if(docId == '0902b1fc801297ad'){
+        		filename = docId + '.pdf';	
+        	}else if(docId == '0902b1fc801297af'){
+        		filename = docId + '.txt';	
+        	}else if(docId == '0902b1fc801297b0'){
+        		filename = docId + '.jpeg';	
+        	}else{
+        		filename = docId;
+        	}
+        	
+        	Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ACETDocumentController.getDocContent}',
+                attachmentId,
+                function(result, event){
+                   console.log("result:");
+                   console.log(result);
+                                                        
+                   var blob = b64toBlob(result, contentType);				         	                
+            	   window.navigator.msSaveOrOpenBlob(blob,filename);           
+                }, 
+                {escape: true}
+            );
+        	
+        	
+        	
+        }                    
+        
+	}
+	
+	</script>
+    <apex:form id="theform" >
+    	<apex:actionFunction name="btnSubmit" action="{!btnSubmit}" reRender="reStatus,redatetime" OnComplete="sendStatus();"/>
+    	<apex:pageBlock > 
+    	<apex:pageBlockButtons location="top">
+        	<apex:commandButton value="Resend" style="float:right" action="{!btnResend}"  id="resendbtn" rerender="popup"/>
+        	
+        	<apex:outputPanel layout="none" rendered="{!NOT(ISNULL(AttachmentId))}"> 
+        		<input type="button" class="btn" id="download" value="Download" style="float:right" onclick="return downloadDoc();"/>
+        	</apex:outputPanel>
+        	<!-- <a href="{!URLFOR($Action.Attachment.Download, '00P21000000vdF4')}">Download</a> -->        	
+        	
+        	
+        </apex:pageBlockButtons>
+        <apex:inputHidden value="{!selectedResWrapper.Resend_Status}" id="reStatus"/>
+    	<apex:inputHidden value="{!selectedResWrapper.Resend_Date_Time}" id="redatetime"/>        	    	    
+        </apex:pageBlock>            
+        <!--  display document content -->	    	    	                                              
+        <apex:outputPanel id="popup">
+        	<apex:outputPanel styleClass="popupBackgroundAddDoc" layout="block" rendered="{!showPopUPAddress}"/>
+            <apex:outputPanel styleClass="custPopupAddDoc" layout="block" rendered="{!showPopUPAddress}">
+            	<apex:outputPanel rendered="{!chooseAddress}" id="AddressView">
+            		<div style="height: 400px; width: 1000px">
+            			<apex:PageBlock >
+            				
+    						
+    						<apex:pageBlockSection columns="1">
+				            	<b>Deliver to :</b><apex:outputLabel rendered="{!showSubmitBtnAOF && selectAddress=='AddressOnFile' }" style="font-weight:bold;color:red" value="Select Alternate Address to resend."/>
+                            	<apex:outputLabel rendered="{!showOriginatorMsg=='true' && selectAddress=='AddressOnFile' }" style="font-weight:bold;color:red" value="Originator cannot receive this document type."/>
+				                <apex:selectRadio id="addRadio" value="{!selectAddress}">
+				                    <apex:selectOption itemValue="AddressOnFile" itemLabel="Address on File" />
+				                    <apex:selectOption itemValue="AlternateAddress" itemLabel="Alternate Address" />
+				                    <apex:actionSupport event="onchange" reRender="AddressView" />
+				                </apex:selectRadio>
+				            </apex:pageBlockSection>
+				            
+				            <apex:outputPanel rendered="{!IF(selectAddress == 'AddressOnFile' , true, false)}">
+             					<apex:pageBlockSection columns="2">
+                					<apex:pageBlockSection columns="2">
+                            			<apex:pageBlockSectionItem >
+				                            <apex:outputLabel value="First Name"/>
+				                            <apex:inputText value="{!personWrap.personFirstName}"  disabled="True"/>
+	                        			</apex:pageBlockSectionItem>
+	                        
+				                        <apex:pageBlockSectionItem >
+				                            <apex:outputLabel value="Middle Name"/>
+				                            <apex:inputText value="{!personWrap.personMiddleName}" disabled="True"/>
+				                        </apex:pageBlockSectionItem>  
+	                   				 </apex:pageBlockSection>
+	                    
+	                    			 <apex:pageBlockSection columns="2">
+				                        	<apex:pageBlockSectionItem >
+					                            <apex:outputLabel value="Last Name"/>
+					                            <apex:inputText value="{!personWrap.personLastName}"  disabled="True"/>
+					                  		</apex:pageBlockSectionItem>
+	                        
+	                         		  		<apex:pageBlockSectionItem >
+	                                  			<apex:outputLabel value="Suffix"/>
+	                            				<apex:inputText value="{!personWrap.personSuffix}"  disabled="True"/>
+	                        				</apex:pageBlockSectionItem> 
+	                    			</apex:pageBlockSection>
+                    			</apex:pageBlockSection>
+                    			<apex:pageBlockSection columns="1">
+                        
+			                        <apex:pageBlockSectionItem >
+				                        <apex:outputLabel value="Organization"/>
+				                        <apex:inputText value="{!personWrap.personOrganization}"  disabled="True" style="width:300px"/>
+				                    </apex:pageBlockSectionItem>
+	                 
+				            
+				                    <apex:pageBlockSectionItem >
+				                        <apex:outputLabel value="Address 1"/>
+				                        <apex:inputText value="{!personWrap.personAddone}"  disabled="True" style="width:300px" />
+				                    </apex:pageBlockSectionItem>
+				                
+				                    <apex:pageBlockSectionItem >
+				                        <apex:outputLabel value="Address 2"/>
+				                        <apex:inputText value="{!personWrap.personAddtwo}"  disabled="True" style="width:300px" />
+				                    </apex:pageBlockSectionItem>
+				                 
+				                    <apex:pageBlockSectionItem >
+				                        <apex:outputLabel value="City"/>
+				                        <apex:inputText value="{!personWrap.personCity}"  disabled="True" style="width:300px" />
+				                    </apex:pageBlockSectionItem>
+	                
+				                    <apex:pageBlockSectionItem >
+				                        <apex:outputLabel value="State"/>
+				                        <apex:inputText value="{!personWrap.personState}"  disabled="True" style="width:300px" />
+				                    </apex:pageBlockSectionItem>
+				               
+				                    <apex:pageBlockSectionItem >
+				                        <apex:outputLabel value="Zip"/>
+				                        <apex:inputText value="{!personWrap.personZipCode}"  disabled="True" style="width:300px" />
+				                    </apex:pageBlockSectionItem>
+              					</apex:pageBlockSection>
+	              			</apex:outputPanel>
+	              		    <apex:outputPanel rendered="{!IF(selectAddress == 'AlternateAddress' , true, false)}" id="AlternateAddress">
+	                        	<apex:pageBlockSection columns="2">
+	                          		<apex:pageBlockSection columns="2">
+	                          			<apex:pageBlockSectionItem >
+			                            	<apex:outputLabel value="First Name"/>
+			                                <apex:inputText value="{!personFirstNameAA}" disabled="{!documentType == 'Member EOB'}" id="firstName" maxLength="30"/>
+			                            </apex:pageBlockSectionItem>
+	                              
+		                                <apex:pageBlockSectionItem >
+		                                	<apex:outputLabel value="Middle Name"/>
+		                                    <apex:inputText value="{!personMiddleNameAA}" disabled="{!documentType == 'Member EOB'}" id="middleName" maxLength="30"/>
+		                                </apex:pageBlockSectionItem>  
+	                          
+	                          		</apex:pageBlockSection>
+	                      			<apex:pageBlockSection columns="2">
+	                      
+				                          <apex:pageBlockSectionItem >
+				                              <apex:outputLabel value="Last Name"/>
+				                              <apex:inputText value="{!personLastNameAA}" disabled="{!documentType == 'Member EOB'}" id="lastName" maxLength="30"/>
+				                          </apex:pageBlockSectionItem>
+				                          
+				                           <apex:pageBlockSectionItem >
+				                              <apex:outputLabel value="Suffix"/>
+				                              <apex:inputText value="{!personSuffixAA}" disabled="{!documentType == 'Member EOB'}"  id="Suffix" maxLength="2"/>
+				                          </apex:pageBlockSectionItem> 
+	                      			</apex:pageBlockSection>
+	                  			</apex:pageBlockSection>
+	                  			<apex:pageBlockSection columns="1">
+	                       
+			                          <apex:pageBlockSectionItem >
+			                              <apex:outputLabel value="Organization"/>
+			                              <apex:inputText value="{!personOrganizationAA}"  id="organization"  style="width:300px" maxLength="35"/>
+			                          </apex:pageBlockSectionItem>
+			                       
+			                  
+			                          <apex:pageBlockSectionItem >
+			                              <apex:outputLabel value="Address 1"/>
+			                               <apex:outputPanel >
+			                                  <div class="requiredInput">
+			                                      <div class="requiredBlock"></div>
+			                                      <apex:inputText value="{!personAddoneAA}"  id="Address1" style="width:300px" maxLength="30"/>
+			                                  </div>
+			                              </apex:outputPanel>
+			                          </apex:pageBlockSectionItem>
+	                      
+			                          <apex:pageBlockSectionItem >
+			                              <apex:outputLabel value="Address 2"/>
+			                              <apex:inputText value="{!personAddtwoAA}"  id="Address2" style="width:300px" maxLength="30"/>
+			                          </apex:pageBlockSectionItem>
+	                       
+			                          <apex:pageBlockSectionItem >
+			                              <apex:outputLabel value="City"/>
+			                               <apex:outputPanel >
+			                                  <div class="requiredInput">
+			                                      <div class="requiredBlock"></div>
+			                                      <apex:inputText value="{!personCityAA}"  id="City" style="width:300px" maxLength="25"/>
+			                                  </div>
+			                              </apex:outputPanel>
+			                          </apex:pageBlockSectionItem>
+	                      
+			                          <apex:pageBlockSectionItem >
+			                              <apex:outputLabel value="State"/>
+			                               <apex:outputPanel >
+			                                  <div class="requiredInput">
+			                                      <div class="requiredBlock"></div>
+			                                      <apex:inputText value="{!personStateAA}"  id="State" style="width:300px" maxLength="2"/>
+			                                  </div>
+			                              </apex:outputPanel>
+			                          </apex:pageBlockSectionItem>
+	                     
+			                          <apex:pageBlockSectionItem >
+			                              <apex:outputLabel value="Zip"/>
+			                               <apex:outputPanel >
+			                                  <div class="requiredInput">
+			                                      <div class="requiredBlock"></div>
+			                                      <apex:inputText value="{!personZipCodeAA}"  id="ZipCode" style="width:300px" maxLength="9" onKeyPress="return isNumberKey(event);"/>
+			                                  </div>
+			                              </apex:outputPanel>
+			                          </apex:pageBlockSectionItem>
+	                    		</apex:pageBlockSection>    
+	                   		</apex:outputPanel>
+	                  		<apex:pageBlockSection >
+		                    	<apex:outputLabel value="Select Submit to send or Cancel to cancel the request."/>
+		                    </apex:pageBlockSection>
+	                  		<apex:pageBlockButtons location="bottom" id="buttonBlock"  >
+                                <apex:commandButton value="Submit" onClick="resendform();" rerender="test" status="redStatusId" disabled="{!(selectAddress == 'AddressOnFile' && (showSubmitBtnAOF || showOriginatorMsg=='true'))}"/>
+                                <apex:commandButton value="Cancel" onClick="sendStatus();" status="redStatusId" rerender="test"/>
+                                <apex:actionStatus id="redStatusId" >
+                                    <apex:facet name="start" >
+                                      <img src="/img/loading.gif" />                    
+                                    </apex:facet>
+                                </apex:actionStatus>
+                                
+                            </apex:pageBlockButtons>
+	              		</apex:PageBlock>
+            		</div>
+            		<!--  fix for IE to display popup over pdf   -->
+            		<iframe class="cover" src="about:blank"></iframe>
+            	</apex:outputPanel>            	 
+			</apex:outputPanel>			
+		</apex:outputPanel>
+		
+		 <apex:outputPanel layout="none" rendered="{!NOT(ISNULL(DocTempUrl))}">		
+			<iframe id="file" name="file" width="100%" height="400px" style="border:none;" src="{!DocTempUrl}"></iframe>
+		</apex:outputPanel>
+		
+		<apex:outputPanel layout="none" rendered="{!ISNULL(DocTempUrl)}">		
+			<iframe id="file" name="file" width="100%" height="400px" src="https://edms-ui-sys.ose-ctc-core.optum.com/documentum-ui/resources/index.html#/login"></iframe>
+		</apex:outputPanel>
+	    </apex:form>	    
+</apex:page>

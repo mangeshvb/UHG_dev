@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Document Type Search By Field</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Document Type Search By Fields</value>
+    </caseValues>
+    <fields>
+        <label><!-- Document Type --></label>
+        <name>Document_Type__c</name>
+        <relationshipLabel><!-- Document Type Search By Fields --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Field Type --></label>
+        <name>Field_Type__c</name>
+        <picklistValues>
+            <masterLabel>Date</masterLabel>
+            <translation><!-- Date --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Id</masterLabel>
+            <translation><!-- Id --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Number</masterLabel>
+            <translation><!-- Number --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Picklist</masterLabel>
+            <translation><!-- Picklist --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Text</masterLabel>
+            <translation><!-- Text --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <label><!-- Optional --></label>
+        <name>Optional__c</name>
+    </fields>
+    <fields>
+        <label><!-- Order --></label>
+        <name>Order__c</name>
+    </fields>
+    <fields>
+        <label><!-- Search By Field Name --></label>
+        <name>Search_By_Field_Name__c</name>
+    </fields>
+    <fields>
+        <label><!-- WS_Search By Field Name --></label>
+        <name>WS_Search_By_Field_Name__c</name>
+    </fields>
+    <startsWith>Consonant</startsWith>
+</CustomObjectTranslation>

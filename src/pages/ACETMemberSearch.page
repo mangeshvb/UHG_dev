@@ -1,0 +1,473 @@
+<apex:page controller="ACETMemberSearchController" sidebar="false" title="Member Detail" action="{!init}" id="thePage">
+    <apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+    <apex:includeScript value="/support/console/38.0/integration.js" />
+    <style>
+        .sd_primary_tabstrip .x-tab-strip-wrap ul.x-tab-strip li.x-tab-strip-active {
+            background: #bbf61d;
+            height: 32px;
+        }
+    </style>
+    <script type="text/javascript" src="https://js-cdn.dynatrace.com/jstag/145e12d594f/xob29014/1077eb28288ea333_bs.js" crossorigin="anonymous"></script>
+    <apex:form id="myform">
+        <apex:inputHidden id="highlightPanelInfo" value="{!hpAdditionInfoStr}" />
+        <c:ACETInteractionHighlightsPanel InteractionAtt="{!Interaction}" rendered="{!NOT(isMember)}" AdditionalInfoAtt="{!AdditionalInfo}" />
+        <apex:outputPanel rendered="{!!isMisdirectCaseCreation}" id="mypanel">
+            <apex:sectionHeader title="member" subtitle="Member Search" />
+            <apex:pageMessages />
+            <apex:pageBlock mode="maindetail" rendered="{!isMember}">
+                <apex:pageBlockSection >
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Interaction Type" />
+                        <apex:selectList id="sourceOriginator" value="{!SourceOriginator}" size="1">
+                            <apex:selectOptions value="{!SourceOriginators}" />
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Source Application" />
+                        <apex:inputField value="{!sourceApplication.Source_Application__c}" id="sourceApplicationId"></apex:inputField>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            <apex:pageBlock id="pbSearch">
+                <apex:pageblockSection id="pbsSearch" columns="2">
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="ID"></apex:outputLabel>
+                        <apex:inputText id="memberId" html-autocomplete="off"
+                            value="{!MemberId}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Last Name"></apex:outputLabel>
+                        <apex:inputText id="lastName" value="{!LastName}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value=""></apex:outputLabel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="First Name"></apex:outputLabel>
+                        <apex:inputText id="firstName" value="{!FirstName}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value=""></apex:outputLabel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem id="pbIDateOfBirth">
+                        <apex:outputLabel value="Date Of Birth"></apex:outputLabel>
+                        <apex:inputField id="dateOfBirth" value="{!CaseStub.tst_Date_Field__c}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value=""></apex:outputLabel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="State"></apex:outputLabel>
+                        <apex:outputPanel layout="none">
+                            <c:ACETState ></c:ACETState>
+                            <!-- to pass value back when the input is disabled in form -->
+                            <apex:inputHidden id="stateHidden" value="{!State}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value=""></apex:outputLabel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Zip Code"></apex:outputLabel>
+                        <apex:outputPanel layout="none">
+                            <apex:inputText id="zipcode" value="{!ZipCode}" />
+                            <!-- to pass value back when the input is disabled in form -->
+                            <apex:inputHidden id="zipcodeHidden" value="{!ZipCode}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageblockSection>
+                <apex:pageBlockButtons location="bottom">
+                    <apex:commandButton id="btnSearch" value="Search" action="{!search}" onclick="return validate();" />
+                    <apex:commandButton id="btnClear" value="Clear" action="{!clear}" onclick="return clearForm();" />
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+            <apex:pageBlock id="pbSearchResult" title="Member Search Results" rendered="{!NOT(ISNULL(DTWrapper))}">                
+                <apex:pageBlockButtons location="Top">
+                <apex:commandButton value="{!$Label.ACETMemberSearchMemberNotFoundButtonLabel}" onclick="return MemberNotFound();" />
+            </apex:pageBlockButtons>
+                <c:ACETDataTable attrDatatableWrapper="{!DTWrapper}"/>
+                <apex:pageBlockTable value="{!Results}" var="r" rendered="{!NOT(ISNULL(Results)) && Results.size == 0}">
+                    <apex:column headerValue="Search criteria returned no matches." width="100%" />
+                </apex:pageBlockTable>
+            </apex:pageBlock>
+            <apex:pageBlock title="Misdirected Call" rendered="{!IsShowMisdirectedCall}">
+                <apex:pageBlockSection >
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Misdirected Reason" />
+                        <apex:selectList value="{!MisdirectedReason}" size="1">
+                            <apex:selectOptions value="{!MisdirectedReasons}" />
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Comments" />
+                        <apex:inputTextArea value="{!Comments}" cols="60" rows="4" />
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                <apex:pageBlockButtons location="bottom">
+                    <apex:commandButton value="Save" action="{!saveMisredirectedCase}" />
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+            <apex:pageBlock title="System Unavailable" rendered="{!NOT(ISNULL(ErrorMessage))}">
+                <apex:pageBlockSection >
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Closed Reason" />
+                        <apex:selectList value="{!ClosedReason}" size="1">
+                            <apex:selectOptions value="{!ClosedReasons}" />
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Comments" />
+                        <apex:inputTextArea value="{!Comments}" cols="60" rows="4" />
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                <apex:pageBlockButtons location="bottom">
+                    <apex:commandButton value="Save"
+                        action="{!saveSystemUnavailableCase}" />
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+            
+            <c:ACETCaseActions attrSourceOriginator="{!SourceOriginator}" attrShowMisdirectButton="true" attrRefreshNavigationTab="true" 
+                rendered="{!NOT(ISNULL(DTWrapper))}" />
+        <style> 
+            .flash {
+                width: 100px;height: 100px;background-color: red;-webkit-animation-name: from {background-color: red;} to {background-color: white;};-webkit-animation-duration: 1s;animation-name: from {background-color: red;} to {background-color: white;};animation-duration: 1s;animation-iteration-count: 10;
+                
+                
+                 /* Safari 4.0 - 8.0 */
+                 /* Safari 4.0 - 8.0 */
+                
+                
+                
+            }
+            
+            /* Safari 4.0 - 8.0 */
+            @-webkit-keyframes example {
+                from {background-color: red;}
+                to {background-color: white;}
+            }
+            
+            /* Standard syntax */
+             example {
+                from {background-color: red;}
+                to {background-color: white;}
+            }
+            </style>
+        <script>
+        var URL;
+        var subjectTabArray = new Array();
+        function setPriTabStyle(result) { 
+            if (result.success) {
+                sforce.console.setTabStyle('background: ;', result.id);
+            } 
+        }
+        function onloadSetTabTitle() {
+            //Set the current tabs title
+            sforce.console.getEnclosingPrimaryTabId(setPriTabStyle);
+            sforce.console.setTabTitle('Member Search');            
+        }
+        
+        function validate(){
+            var $memberId = $("[id$='memberId']");
+            var $firstName = $("[id$='firstName']");
+            var $lastName = $("[id$='lastName']");
+            var $dateOfBirth = $("[id$='dateOfBirth']");
+            var $state = $("[id$='state']");
+            var $zipcode = $("[id$='zipcode']");
+
+            $firstName.removeClass("error").parent().find(".errorMsg").remove();
+            $lastName.removeClass("error").parent().find(".errorMsg").remove();
+            $dateOfBirth.removeClass("error").parent().find(".errorMsg").remove();
+            $state.removeClass("error").parent().find(".errorMsg").remove();
+            $zipcode.removeClass("error").parent().find(".errorMsg").remove();
+
+            $("[id$='pbSearch']").find(".pbError").remove();
+
+            var result = true;
+            if($firstName.val() && $firstName.val().indexOf('*') > -1 && $firstName.val().length < 3){
+                var errorMsg = "You must enter at least 2 characters with a wildcard search";
+                $firstName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+                result = false;
+            }
+
+            if($lastName.val() && $lastName.val().indexOf('*') > -1 && $lastName.val().length < 4){
+                var errorMsg = "You must enter at least 3 characters with a wildcard search";
+                $lastName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+                result = false;
+            }
+
+            if($lastName.val() && $lastName.val().indexOf('*') == -1 && $lastName.val().length < 2){
+                var errorMsg = "You must enter at least 2 characters";
+                $lastName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+                result = false;
+            }
+
+
+            if(!$memberId.val()){
+                 if($zipcode.val() && ($zipcode.val().length != 5)){
+                    var errorMsg = "You must enter 5 digits";
+                    $zipcode.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+                    result = false;
+                }
+
+                if(!$firstName.val() && !$lastName.val() && !$dateOfBirth.val() && !$state.val() && !$zipcode.val()){
+                    var errorMsg = 'ID or Name Search is Required.';
+                    $("[id$='pbSearch']").prepend('<div class="pbError">Error: Invalid Data. <br/>' + errorMsg + '</div>');
+                    result = false;
+                }else{
+                    if(!$firstName.val() || !$lastName.val() || (!$dateOfBirth.val() && !$state.val() && !$zipcode.val())){
+                        var errorMsg = 'Name search requires Last Name, First Name and at least one additional field.';
+                        $("[id$='pbSearch']").prepend('<div class="pbError">Error: Invalid Data. <br/>' + errorMsg + '</div>');
+
+                        if(!$firstName.val()) $firstName.addClass("error");
+                        if(!$lastName.val())  $lastName.addClass("error");
+
+                        if(!$dateOfBirth.val() && !$state.val() && !$zipcode.val()){
+                            if(!$dateOfBirth.val()) $dateOfBirth.addClass("error");
+                            if(!$state.val()) $state.addClass("error");
+                            if(!$zipcode.val()) $zipcode.addClass("error");
+                        }
+                        result = false;
+                    }
+                }
+            }
+
+            if($dateOfBirth.val()){
+                if(!isValidDate($dateOfBirth.val())){
+                    var errorMsg = "Invalid Date";
+                    $dateOfBirth.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+                    result = false;
+                }
+            }
+
+            $("[id$='zipcodeHidden']").val($("[id$='zipcode']").val());
+            $("[id$='stateHidden']").val($("[id$='searchstate']").val());
+
+            return result;
+        }
+
+        function clearForm(){
+            $("[id$='btnClear']").closest('form').find("input[type=text], select, input[type=hidden]").val("");
+
+            return true;
+        }
+        
+        var pushSubjectToArray = function pushSubjectToArray(result) {
+            if (result.success == true) {
+                subjectTabArray.push(result.id);
+                subjectTabArrayStr = JSON.stringify(subjectTabArray);
+                localStorage.setItem('subjectTabArray', subjectTabArrayStr);
+            }
+        };
+        
+        function openSuccess(){
+                //
+            }
+        function init(){
+            if($("[id$='memberId']").val()){
+                disableStateAndZip(true);
+            }
+
+            $("[id$='state']").on('keypress',function(e){
+                var p = e.which;
+                if(p==13){
+                    validate();
+                }
+            });
+
+            $("[id$='state']").val($("[id$='stateHidden']").val());
+
+            $("[id$='memberId']").keypress(function (e) {
+                var regex = new RegExp("^[a-zA-Z0-9]+$");
+                var str = String.fromCharCode(!e.charCode ? e.which : e.charCode);
+                if (regex.test(str) || (/^(8|9|13|27)$/.test("" + e.keyCode))) {
+                    return true;
+                }
+
+                e.preventDefault();
+                return false;
+            });
+
+            $("[id$='memberId']").on('input propertychange', function() {
+                if ($(this).val() == "") {
+                    disableStateAndZip(false);
+                }
+            });
+
+            $("[id$='memberId']").on('paste', function() {
+                var element = this;
+                setTimeout(function () {
+                    if($(element).val()) {
+                        disableStateAndZip(true);
+                    }
+                  }, 100);
+            });
+
+            $("[id$='memberId']").keyup(function (e) {
+                if(this.value){
+                    disableStateAndZip(true);
+                }else{
+                    disableStateAndZip(false);
+                }
+            });
+
+
+            $("[id$='zipcode']").keypress(function (e) {
+                // Allow delete, tab, enter and escape keys through
+                if (/^(8|9|13|27)$/.test("" + e.keyCode)) {
+                    return true;
+                }
+
+                var regex = new RegExp("^[0-9]+$");
+                var str = String.fromCharCode(!e.charCode ? e.which : e.charCode);
+                if (regex.test(str)) {
+                    return true;
+                }
+
+                e.preventDefault();
+                return false;
+            });
+
+        }
+
+        function disableStateAndZip(flag){
+            if(flag){
+                $("[id$='zipcode']").attr("disabled","true");
+                $("[id$='searchstate']").attr("disabled","true");
+            }else{
+                $("[id$='zipcode']").removeAttr("disabled");
+                $("[id$='searchstate']").removeAttr("disabled");
+            }
+        }
+
+
+        function isValidDate(dateStr) {
+            var datePat = /^(\d{1,2})(\/|-)(\d{1,2})\2(\d{2}|\d{4})$/;
+            var matchArray = dateStr.match(datePat);
+            if (matchArray == null) {
+                return false;
+            }
+            month = matchArray[1]; // parse date into variables
+            day = matchArray[3];
+            year = matchArray[4];
+            if (month < 1 || month > 12) { // check month range
+                return false;
+            }
+            if (day < 1 || day > 31) {
+                return false;
+            }
+            if ((month==4 || month==6 || month==9 || month==11) && day==31) {
+                return false
+            }
+            if (month == 2) { // check for february 29th
+            var isleap = (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+            if (day>29 || (day==29 && !isleap)) {
+                return false;
+               }
+            }
+            return true;  // date is valid
+        }
+
+        $(document).ready(function() {
+            init();
+        });
+                
+        function processDatatable(row, data, dataIndex){
+            $(row).children().first().html("<a id='lastNameLinkid' href='#'>" + data.LastName + "</a>");                      
+            var sourceOriginator = $("[id$='sourceOriginator']").val();
+            var interactionId = "{!JSENCODE(Interaction.Id)}";
+                                                                  
+            $(row).children().first().on('click', function(e){ 
+                if(!interactionId){                             
+                    Visualforce.remoting.Manager.invokeAction(
+                       '{!$RemoteAction.ACETMemberSearchController.createInteraction}',
+                       sourceOriginator,
+                       interactionId,                   
+                       function(result, event){
+                          navigateToDetail(result,data);                                 
+                       }, 
+                       {escape: true}
+                   );
+               }else{
+                    navigateToDetail(interactionId,data); 
+               }
+               return false;
+            }); 
+                     
+        }
+        
+        function navigateToDetail(interactionId, memberResult){                        
+             var OriginatorType = '{!JSENCODE(Interaction.Originator_Type__c)}';
+             hightlightPanelInfo = $("[id$='highlightPanelInfo']").val();
+             
+             var tabName = 'Detail' + ' - ' + memberResult.LastName;
+             var ProvTypeCode =   '{!JSENCODE($CurrentPage.parameters.ProvTypeCode)}';
+             var sourceApp = $("[id$='sourceApplicationId']").val();  
+             var url = '/apex/ACETMemberDetail?lastName=' + memberResult.LastName + '&firstName=' + memberResult.FirstName + '&Id=' + memberResult.Id +'&ssn=' + memberResult.SSNum +'&scr=' + memberResult.SCRId + '&SRK=' + (memberResult.SurrogateKey ? memberResult.SurrogateKey : '') + '&subjectdob=' + memberResult.DOB + '&sourceOriginator=' + $("[id$='sourceOriginator']").val()+ '&InteractionId=' + interactionId + '&IsMember = {!IsMember}'+ '&ProviderId = {!$CurrentPage.parameters.Id}'+ '&groupId = {!groupId}&additionalInfo='+hightlightPanelInfo + '&ProvTypeCode = ' + ProvTypeCode + '&sourceApp=' + sourceApp;;
+             var tabIdUsngClntId = memberResult.Id ? memberResult.Id : memberResult.SurrogateKey;
+             
+             if (OriginatorType == 'Provider' || OriginatorType == 'Producer' || OriginatorType == 'Other' || OriginatorType == 'Broker' || OriginatorType == 'Group/Employer' || OriginatorType == 'General Agent' || OriginatorType == 'UHG' || OriginatorType == 'Third Party') {
+                 sforce.console.getFocusedPrimaryTabId(function(result) {
+                     sforce.console.openSubtab(result.id, url, true, tabName,null , pushSubjectToArray);
+                 });
+             }
+             else {  
+                 sforce.console.openPrimaryTab('', url, true, tabName, openSuccess, tabIdUsngClntId);
+             }
+             return false;            
+              
+        }
+        
+        $(document).ready(function() {
+            onloadSetTabTitle();
+            sforce.console.getEnclosingPrimaryTabId(function(result){
+               sforce.console.addEventListener('MemberSearchRefresh_'.concat(result.id), function(r){
+                   $("[id$='btnClear']").click();
+               });
+           });
+           var noAutoSearch = '{!JSENCODE($CurrentPage.parameters.noAutoSearch)}';
+           if(noAutoSearch != 'true'){
+               var vccdParams = JSON.parse('{!$CurrentPage.parameters.vccdParams}');
+               $("[id$='memberId']").val(vccdParams.memberId);
+               if(vccdParams.dob != '')
+                   $("[id$='dateOfBirth']").val(vccdParams.dob);               
+               $("[id$='btnSearch']").click();
+
+           }
+           if('{!Results.size}' == 1 && noAutoSearch == 'true'){
+               $("[id$='lastNameLink']").click();
+           }
+
+        });
+        function Misdirect(){
+            var url = 'interactionId={!JSENCODE($CurrentPage.parameters.interactionId)}';
+            url +='&contactId={!JSENCODE($CurrentPage.parameters.contactId)}';
+            url +='&callTopic=Provider Other Inquiry';
+            url +='&originatorRelationship={!wrapper.AdditionalInfo.OriginatorRelationship}';
+            sforce.console.getFocusedPrimaryTabId(function(result){
+                url = 'apex/ACETMemberOpenTopicMisdirect?'+url;
+                sforce.console.openSubtab(result.id , url, true,'Cancel', null);
+                });
+            return false;
+        }
+        
+        function MemberNotFound()
+        {
+            var InteractionType = '{!JSENCODE(SourceOriginator)}';
+            var memberId = '{!JSENCODE(MemberId)}';
+            var dateOfBirth = $("[id$='dateOfBirth']").val();
+            var lastName = $("[id$='lastName']").val();
+            var firstName = $("[id$='firstName']").val();
+            var state = $("[id$='stateHidden']").val()
+            var zipcode = $("[id$='zipcode']").val();
+            var zipcode = $("[id$='ssn']").val();
+            var dtNow = new Date();
+            var dtTime = dtNow.getTime();
+            var RedirectURL = '/apex/ACETMemberNotFoundForm?IT=' + InteractionType  + '&MID=' + memberId  + '&LN=' + lastName + '&DOB=' + dateOfBirth + '&ST=' + state+ '&FN=' + firstName + '&zip=' + zipcode + '&TS=' + dtTime;
+            sforce.console.openPrimaryTab(null, RedirectURL, true, 'Enter Member Information', null, 'MNF' + dtTime);
+            return false;
+        }
+    </script>
+        </apex:outputPanel>
+    </apex:form>
+    <apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/main.js')}" />
+</apex:page>

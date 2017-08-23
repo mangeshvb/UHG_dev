@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Milestone Performance</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Milestone Performance</value>
+    </caseValues>
+    <fields>
+        <label><!-- Completion Date --></label>
+        <name>ActualMilestoneCompletionDateTime__c</name>
+    </fields>
+    <fields>
+        <label><!-- Completion Minutes --></label>
+        <name>ActualMilestoneMinutestoComplete__c</name>
+    </fields>
+    <fields>
+        <label><!-- Case Number --></label>
+        <name>CaseNumber__c</name>
+        <relationshipLabel><!-- Milestone Performance --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Case Ownership End Date --></label>
+        <name>CaseOwnershipEndDateTime__c</name>
+    </fields>
+    <fields>
+        <label><!-- Case Ownership Start Date --></label>
+        <name>CaseOwnershipStartDateTime__c</name>
+    </fields>
+    <fields>
+        <label><!-- Case Status --></label>
+        <name>CaseStatus__c</name>
+    </fields>
+    <fields>
+        <label><!-- Case Owner Shadow --></label>
+        <name>Case_Owner_Shadow__c</name>
+    </fields>
+    <fields>
+        <label><!-- Case Owner --></label>
+        <name>Case_Owner__c</name>
+    </fields>
+    <fields>
+        <label><!-- Case Owner&apos;s Role --></label>
+        <name>Case_Owners_Role__c</name>
+    </fields>
+    <fields>
+        <label><!-- Variance --></label>
+        <name>CompletionTimeDifferenceMinutes__c</name>
+    </fields>
+    <fields>
+        <label><!-- Completion Time (DDD:HH:MM) --></label>
+        <name>Completion_Time_DDD_HH_MM__c</name>
+    </fields>
+    <fields>
+        <label><!-- Event --></label>
+        <name>Event__c</name>
+    </fields>
+    <fields>
+        <label><!-- Milestone --></label>
+        <name>MilestoneName__c</name>
+    </fields>
+    <fields>
+        <label><!-- Start Date --></label>
+        <name>MilestoneStartDateTime__c</name>
+    </fields>
+    <fields>
+        <label><!-- Target Date --></label>
+        <name>PlannedMilestoneCompletionDateTime__c</name>
+    </fields>
+    <fields>
+        <label><!-- Target Minutes --></label>
+        <name>PlannedMilestoneMinutestoComplete__c</name>
+    </fields>
+    <fields>
+        <label><!-- Target Time (DDD:HH:MM) --></label>
+        <name>Target_Time_DDD_HH_MM__c</name>
+    </fields>
+    <fields>
+        <label><!-- Variance Time (DDD:HH:MM) --></label>
+        <name>Variance_Time_DDD_HH_MM__c</name>
+    </fields>
+    <layouts>
+        <layout>Milestone Performance Layout</layout>
+        <sections>
+            <label><!-- Case Information --></label>
+            <section>Case Information</section>
+        </sections>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- Milestone Information --></label>
+            <section>Milestone Information</section>
+        </sections>
+    </layouts>
+    <startsWith>Consonant</startsWith>
+</CustomObjectTranslation>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Bookmark Link</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Bookmark Links</value>
+    </caseValues>
+    <fields>
+        <label><!-- Active --></label>
+        <name>Active__c</name>
+    </fields>
+    <fields>
+        <label><!-- Display Name --></label>
+        <name>Display_Name__c</name>
+    </fields>
+    <fields>
+        <label><!-- Profiles --></label>
+        <name>Profiles__c</name>
+        <picklistValues>
+            <masterLabel>ACET CSO</masterLabel>
+            <translation><!-- ACET CSO --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ACET CSS</masterLabel>
+            <translation><!-- ACET CSS --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ACET DCSM</masterLabel>
+            <translation><!-- ACET DCSM --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ACET EB Agent</masterLabel>
+            <translation><!-- ACET EB Agent --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ACET Member</masterLabel>
+            <translation><!-- ACET Member --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ACET Provider</masterLabel>
+            <translation><!-- ACET Provider --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ACET Rapid Responder Team</masterLabel>
+            <translation><!-- ACET Rapid Responder Team --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ACET System Administrator</masterLabel>
+            <translation><!-- ACET System Administrator --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ECM Back Office Agent</masterLabel>
+            <translation><!-- ECM Back Office Agent --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Research User</masterLabel>
+            <translation><!-- Research User --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>System Administrator</masterLabel>
+            <translation><!-- System Administrator --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <label><!-- URL --></label>
+        <name>URL__c</name>
+    </fields>
+    <layouts>
+        <layout>Bookmark Link Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+    </layouts>
+    <startsWith>Consonant</startsWith>
+</CustomObjectTranslation>

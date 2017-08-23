@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Interaction</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Interactions</value>
+    </caseValues>
+    <fields>
+        <label><!-- Caller Phone Number --></label>
+        <name>Caller_Id_ANI__c</name>
+    </fields>
+    <fields>
+        <label><!-- Caller Type --></label>
+        <name>Caller_Type__c</name>
+        <picklistValues>
+            <masterLabel>Assistant Controller</masterLabel>
+            <translation><!-- Assistant Controller --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Benefit Adminstrator/Unlisted</masterLabel>
+            <translation><!-- Benefit Adminstrator/Unlisted --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Broker</masterLabel>
+            <translation><!-- Broker --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Chief Executive Officer</masterLabel>
+            <translation><!-- Chief Executive Officer --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Chief Financial Officer</masterLabel>
+            <translation><!-- Chief Financial Officer --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Chief Operating Officer</masterLabel>
+            <translation><!-- Chief Operating Officer --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Controller</masterLabel>
+            <translation><!-- Controller --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Director</masterLabel>
+            <translation><!-- Director --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>General Agent</masterLabel>
+            <translation><!-- General Agent --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Listed Broker of Record</masterLabel>
+            <translation><!-- Listed Broker of Record --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Listed General Agent</masterLabel>
+            <translation><!-- Listed General Agent --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Member Note</masterLabel>
+            <translation><!-- Member Note --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Owner</masterLabel>
+            <translation><!-- Owner --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>President</masterLabel>
+            <translation><!-- President --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Primary Benefits Administrator</masterLabel>
+            <translation><!-- Primary Benefits Administrator --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Primary Billing Administrator</masterLabel>
+            <translation><!-- Primary Billing Administrator --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Third Party</masterLabel>
+            <translation><!-- Third Party --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>UHC Employee</masterLabel>
+            <translation><!-- UHC Employee --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Unlisted Contact</masterLabel>
+            <translation><!-- Unlisted Contact --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Vice President</masterLabel>
+            <translation><!-- Vice President --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <label><!-- Claim/Authorization/Referral  Number --></label>
+        <name>Claim_Authorization_Referral_Number__c</name>
+    </fields>
+    <fields>
+        <label><!-- Contact Name --></label>
+        <name>Contact_Name__c</name>
+    </fields>
+    <fields>
+        <label><!-- Highlight Panel GroupInfo --></label>
+        <name>Highlight_Panel_GroupInfo__c</name>
+    </fields>
+    <fields>
+        <label><!-- History Log --></label>
+        <name>History_Log__c</name>
+    </fields>
+    <fields>
+        <label><!-- ID --></label>
+        <name>Id__c</name>
+    </fields>
+    <fields>
+        <label><!-- Interaction Type --></label>
+        <name>Interaction_Type__c</name>
+        <picklistValues>
+            <masterLabel>Chat</masterLabel>
+            <translation><!-- Chat --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Email</masterLabel>
+            <translation><!-- Email --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Fax</masterLabel>
+            <translation><!-- Fax --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Inbound Correspondence</masterLabel>
+            <translation><!-- Inbound Correspondence --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Mail</masterLabel>
+            <translation><!-- Mail --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Outbound Call</masterLabel>
+            <translation><!-- Outbound Call --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Phone Call</masterLabel>
+            <translation><!-- Phone Call --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Portal</masterLabel>
+            <translation><!-- Portal --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Research Only</masterLabel>
+            <translation><!-- Research Only --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Text</masterLabel>
+            <translation><!-- Text --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Walk-In</masterLabel>
+            <translation><!-- Walk-In --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <label><!-- Member Date of Birth --></label>
+        <name>Member_Date_of_Birth__c</name>
+    </fields>
+    <fields>
+        <label><!-- Member ID --></label>
+        <name>Member_Id__c</name>
+    </fields>
+    <fields>
+        <label><!-- NPI --></label>
+        <name>NPI__c</name>
+    </fields>
+    <fields>
+        <label><!-- Originator Name --></label>
+        <name>Originator_Name__c</name>
+    </fields>
+    <fields>
+        <label><!-- Originator Type --></label>
+        <name>Originator_Type__c</name>
+        <picklistValues>
+            <masterLabel>Broker</masterLabel>
+            <translation><!-- Broker --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>General Agent</masterLabel>
+            <translation><!-- General Agent --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Group/Employer</masterLabel>
+            <translation><!-- Group/Employer --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Member</masterLabel>
+            <translation><!-- Member --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Producer</masterLabel>
+            <translation><!-- Producer --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Provider</masterLabel>
+            <translation><!-- Provider --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Third Party</masterLabel>
+            <translation><!-- Third Party --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>UHG</masterLabel>
+            <translation><!-- UHG --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Unlisted Contact</masterLabel>
+            <translation><!-- Unlisted Contact --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <label><!-- Originator --></label>
+        <name>Originator__c</name>
+        <relationshipLabel><!-- Interactions --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Question Type Code --></label>
+        <name>Question_Type_Code__c</name>
+    </fields>
+    <fields>
+        <label><!-- Question Type --></label>
+        <name>Question_Type__c</name>
+    </fields>
+    <fields>
+        <label><!-- Source Application --></label>
+        <name>Source_Application__c</name>
+        <picklistValues>
+            <masterLabel>ACET</masterLabel>
+            <translation><!-- ACET --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ISET</masterLabel>
+            <translation><!-- ISET --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <label><!-- TFN (Toll Free Number) --></label>
+        <name>TFN_Toll_Free_Number__c</name>
+    </fields>
+    <fields>
+        <label><!-- Provider Tax ID --></label>
+        <name>Tax_Id__c</name>
+    </fields>
+    <fields>
+        <label><!-- Third Party --></label>
+        <name>Third_Party__c</name>
+        <relationshipLabel><!-- Interactions (Third Party) --></relationshipLabel>
+    </fields>
+    <layouts>
+        <layout>Interaction Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- VCCD Information --></label>
+            <section>VCCD Information</section>
+        </sections>
+    </layouts>
+    <recordTypes>
+        <label><!-- Phone --></label>
+        <name>Phone</name>
+    </recordTypes>
+    <startsWith>Consonant</startsWith>
+</CustomObjectTranslation>

@@ -1,0 +1,102 @@
+<project name="Sample usage of Salesforce Ant tasks" default="test" basedir="." xmlns:sf="antlib:com.salesforce">
+    <property file="build1.properties"/>
+    <property environment="env"/>
+	
+	<!-- Setting default value for username, password and session id properties to empty string 
+         so unset values are treated as empty. Without this, ant expressions such as ${sf.username}
+         will be treated literally.
+    -->
+    <condition property="sf.username" value=""> <not> <isset property="sf.username"/> </not> </condition>
+    <condition property="sf.password" value=""> <not> <isset property="sf.password"/> </not> </condition>
+    <condition property="sf.sessionId" value=""> <not> <isset property="sf.sessionId"/> </not> </condition>
+
+    <taskdef resource="com/salesforce/antlib.xml" uri="antlib:com.salesforce">
+        <classpath>
+            <pathelement location="../ant-salesforce.jar" />        	
+        </classpath>
+    </taskdef>
+	
+	<target name="proxy">
+		<property name="proxy.host" value=" ngproxy.persistent.co.in " />
+		<property name="proxy.port" value="8080" />
+		<property name="proxy.user" value="mangesh_belsare" />
+		<property name="proxy.pwd" value="Cisco$123" />
+		<setproxy proxyhost="${proxy.host}" proxyport="${proxy.port}" proxyuser="${proxy.user}"  proxypassword="${proxy.pwd}" />
+	</target>
+
+	<target name="SFDCFetch">
+	  <!-- Retrieve the contents into another directory -->
+	  <sf:retrieve username="${sf.username}"
+				   password="${sf.password}"
+				   serverurl="${sf.serverurl}"
+				   retrieveTarget="RELATIVE PATH OF SRC FOLDER WHICH IS FETCHED BY ECLIPSE"
+				   unpackaged="RELATIVE PATH OF PACKAGE.XML FILE" />
+	</target>
+	
+	
+	<target name="retrieveUnpackaged">
+      <!-- Retrieve the contents into another directory -->
+	  <mkdir dir="src"/>
+	   
+      <sf:retrieve username="${sf.username}"
+				   password="${sf.password}" 
+				   sessionId="${sf.sessionId}"
+				   serverurl="${sf.serverurl}" 
+				   maxPoll="${sf.maxPoll}" 
+				   retrieveTarget="src"
+				   unpackaged="src/package.xml"/>
+    </target>
+	
+	
+	<target name="deploy">
+		<sf:deploy
+		  deployRoot="src"
+		  username="${sf.username}"
+		  password="${sf.password}"
+		  serverurl="${sf.serverurl}"
+		  maxPoll="${sf.maxPoll}"
+		/>
+		
+	</target>
+	
+	<target name="deployCodeRunLocalTests">
+	  <sf:deploy 
+			username="${sf.username}" 
+			password="${sf.password}"
+			sessionId="${sf.sessionId}"
+			serverurl="${sf.serverurl}"
+			maxPoll="${sf.maxPoll}"
+			deployRoot="src" 
+			rollbackOnError="true"  
+	</target>
+	
+
+	<macrodef name="git">
+		<attribute name="command" />
+		<attribute name="dir" default="${gt.Directory}" />
+		<element name="args" optional="true" />
+		<sequential>
+			<echo message="git @{command}" />
+			<exec executable="git" dir="@{dir}">
+				<arg value="@{command}" />
+				<args/>
+			</exec>
+		</sequential>
+	</macrodef>
+
+	<target name="GitOperations" description="Commits all changes to version git" depends="deploy"> 
+	<!-- <target name="GitOperations" description="Commits all changes to version git"> -->
+	<!--	<echo message="Commiting all changes with message ${gt.commitMessage}" />  -->
+		<git command="add">
+			<args>
+				<arg value="." />
+			</args>
+		</git>
+		<git command="commit">
+			<args>
+				<arg value="-am ${gt.commitMessage}" />
+			</args>
+		</git>
+	    <!--	<git command="push" /> -->
+	</target>
+</project>

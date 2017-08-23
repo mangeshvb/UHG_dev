@@ -1,0 +1,817 @@
+<apex:page controller="ACETClaimDetailController" sidebar="False"
+    tabStyle="ClaimSearch__tab" title="Claim Detail" action="{!init}">
+    <apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+    <apex:stylesheet value="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+    <apex:includeScript value="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></apex:includeScript>
+    <apex:form >
+        <style>
+.bPageBlock .labelCol, body .print .topics-label {
+    padding-top: 2px;
+    padding-right: 21px;
+    padding-bottom: 2px;
+    padding-left: 2px;
+    text-align: right;
+    font-size: 91%;
+    font-weight: bold;
+    color: #333;
+}
+
+.bPageBlock .dataCol {
+    padding-top: 2px;
+    padding-right: 46px;
+    padding-bottom: 2px;
+    padding-left: 0px;
+    text-align: right;
+}
+</style>
+        <!-- Get json from Claim search screen -->
+        <apex:includeScript value="/soap/ajax/30.0/connection.js" />
+        <apex:includeScript value="/support/console/30.0/integration.js" />
+        <apex:outputPanel rendered="{!!isCancelCaseCreation}">
+            <script type='text/javascript'>        
+        function getUrlVars(){            
+            var vars = [], hash;            
+            var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');            
+            for(var i = 0; i < hashes.length; i++)                
+            {                
+                hash = hashes[i].split('=');                
+                vars.push(hash[0]);                
+                vars[hash[0]] = hash[1];                
+            }            
+            return vars;            
+        }        
+        var childId = Math.floor((Math.random() * 500) + 1);        
+        var listener = function (result)        
+        {
+            var jsonstr = result.message;            
+            childjsonfunction(jsonstr);           
+        };        
+        sforce.console.addEventListener('ParentDataResponse_'.concat(childId), listener);        
+        var parentId = getUrlVars()["parentId"];        
+        sforce.console.fireEvent('RequestParentData_'.concat(parentId), childId);        
+        </script>
+            <script>
+           function consumeraccnt(url){
+                    window.open(url);
+           }
+           function OpenReferralDetail(resultReferralnumber) {
+                var url = '/apex/ACETReferalDetails?id='+resultReferralnumber+ '&'+'interactionId={!JSENCODE(Interaction.Id)}' +'&' + 'contactId={!JSENCODE(Subject.Id)}'+ '&' + 'sourceOriginator={!sourceOriginator}'+ '&' +'additionalInfo={!hpAdditionInfoStr}' ;
+                sforce.console.getFocusedPrimaryTabId(function(result){
+                    sforce.console.openSubtab(result.id, url, true,'Referral - '+resultReferralnumber, null);
+                });
+            }
+            function OpenViewAuthorization(AuthNumber) {
+                var url = '/apex/ACETViewAuthorization?AuthNumber='+AuthNumber+ '&'+'interactionId={!JSENCODE(Interaction.Id)}' +'&' + 'contactId={!JSENCODE(Subject.Id)}'+ '&' + 'sourceOriginator={!sourceOriginator}'+ '&' +'additionalInfo={!hpAdditionInfoStr}' ;
+                sforce.console.getFocusedPrimaryTabId(function(result){
+                    sforce.console.openSubtab(result.id,url, true,'View Authorizations', null);
+                }); 
+            }
+        </script>
+            <apex:actionFunction name="childjsonfunction"
+                action="{!childconsolefunction}" reRender="status1" status="status1">
+
+                <apex:param value="" name="param1" assignTo="{!response}" />
+
+            </apex:actionFunction>
+
+            <apex:actionStatus id="status1">
+
+                <apex:facet name="start">
+
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+
+                    <center>loading...</center>
+
+                </apex:facet>
+
+                <apex:facet name="stop">
+
+                    <!-- {!claimList} -->
+
+                </apex:facet>
+            </apex:actionStatus>
+        </apex:outputPanel>
+        <c:ACETInteractionHighlightsPanel InteractionAtt="{!Interaction}"
+            SubjectAtt="{!Subject}" AdditionalInfoAtt="{!AdditionalInfo}"></c:ACETInteractionHighlightsPanel>
+        <apex:inputHidden id="highlightPanelInfo" value="{!hpAdditionInfoStr}" />
+        <apex:outputPanel rendered="{!!isCancelCaseCreation}">
+            <apex:pageMessages />
+            <apex:sectionHeader title="Claim" subtitle="{!ClaimsDetail.ClaimId}" />
+
+            <apex:pageBlock mode="maindetail" title="Claim Details"
+                rendered="{!noresult}">
+
+                <apex:pageBlockSection columns="1" html-auto-doc="auto" html-auto-doc-case-items="true">
+                    <apex:pageBlockTable value="{!claimList}" var="r">
+                        <apex:column headerValue="Claim ID">
+                            <apex:outputText value="{!r.ClaimId}"
+                                rendered="{!r.ClaimId == ClaimsDetail.ClaimId}"></apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="PHI Restriction">
+                            <apex:outputText value="{!r.PHIRestriction}"
+                                rendered="{!r.ClaimId == ClaimsDetail.ClaimId}"></apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Tax ID">
+                            <apex:outputText value="{!r.TaxId}"
+                                rendered="{!r.ClaimId == ClaimsDetail.ClaimId}"></apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Provider">
+                            <apex:outputText value="{!r.provider}"
+                                rendered="{!r.ClaimId == ClaimsDetail.ClaimId}"></apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Network">
+                            <apex:outputText value="{!r.network}"
+                                rendered="{!r.ClaimId == ClaimsDetail.ClaimId}"></apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Service Start">
+                            <apex:outputText value="{0,date,MM/dd/yyyy}"
+                                rendered="{!r.ClaimId == ClaimsDetail.ClaimId}">
+                                <apex:param value="{!r.ServiceStart}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Service End">
+                            <apex:outputText value="{0,date,MM/dd/yyyy}"
+                                rendered="{!r.ClaimId == ClaimsDetail.ClaimId}">
+                                <apex:param value="{!r.ServiceEnd}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Total Charged"
+                            style="text-align: right;">
+                            <apex:outputText style="text-align: right;"
+                                value="${0, number, ###,##0.00}"
+                                rendered="{!r.ClaimId == ClaimsDetail.ClaimId}">
+                                <apex:param value="{!r.TotalCharged}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Total Paid" style="text-align: right;">
+                            <apex:outputText value="${0, number, ###,##0.00}"
+                                rendered="{!r.ClaimId == ClaimsDetail.ClaimId}">
+                                <apex:param value="{!r.TotalPaid}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Deductible" style="text-align: right;">
+                            <apex:outputText value="${0, number, ###,##0.00}"
+                                rendered="{!r.ClaimId == ClaimsDetail.ClaimId}">
+                                <apex:param value="{!r.Deductible}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Processed">
+                            <apex:outputText value="{0,date,MM/dd/yyyy}"
+                                rendered="{!r.ClaimId == ClaimsDetail.ClaimId}">
+                                <apex:param value="{!r.Processed}" />
+                            </apex:outputText>
+                        </apex:column>
+                        
+                        <apex:column headerValue="Status">
+                            <apex:outputText value="{!r.Status}"
+                                rendered="{!r.ClaimId == ClaimsDetail.ClaimId}"></apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Primary Diagnosis Code">
+                            <apex:outputText value="{!r.PrimaryDiagnosisCode}"
+                                rendered="{!r.ClaimId == ClaimsDetail.ClaimId}"></apex:outputText>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+                <br />
+                <br />
+                <apex:pageblockSection columns="3">
+                    <apex:pageblockSection columns="2">
+                        <apex:pageblockSectionItem >
+                            <apex:outputPanel >
+                                <apex:outputLink value="" id="claim_image">Claim Image: {!ClaimsDetail.ClaimId}</apex:outputLink>
+                            </apex:outputPanel>
+                            </apex:pageblocksectionitem>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLink value="" id="LinkMember">Member EOB</apex:outputLink>
+                            </apex:pageBlockSectionItem>
+                    </apex:pageblockSection>
+                    <apex:pageblockSection columns="2">
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLink value="" id="LinkProviderPRA">Provider PRA</apex:outputLink>
+                            </apex:pageblockSectionItem>
+                            <apex:pageblockSectionItem >
+                                <a href="#"
+                                    onclick="consumeraccnt('https://cirrus-dev.optum.com/index.html');">Consumer
+                                    Accounts</a>
+                            </apex:pageblockSectionItem>
+                            </apex:pageblocksection>
+                            <apex:pageblockSection columns="2">
+                                <apex:pageBlockSectionItem >
+                                    <apex:outputLink value="" id="LinkWand">WAND</apex:outputLink>
+                                    </apex:pageblockSectionItem>
+                                    <apex:pageBlockSectionItem >
+                                        </apex:pageblockSectionItem>
+                                        </apex:pageblocksection>
+                            </apex:pageblockSection>
+                            
+                            <apex:pageblockSection columns="3" collapsible="true"
+                                title="Summary Information" html-auto-doc="true">
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:17%">
+                                    <apex:outputLabel value="Policy Number" for="policynum" />
+                                    <apex:outputText value="{!ClaimsDetail.PolicyNumber}"
+                                        id="policynum" />
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:17%">
+                                    <apex:outputLabel value="Authorization Number"
+                                        for="Authorization_Number" />
+                                    <a href="#" id="Authorization_Number"
+                                        onClick="OpenViewAuthorization('{!ClaimsDetail.AuthorizationNumber}');return false">
+                                        {!ClaimsDetail.AuthorizationNumber} </a>
+                                </apex:pageBlockSectionItem>
+                                <apex:outputPanel style="width:30%"></apex:outputPanel>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:17%">
+                                    <apex:outputLabel value="Received Date" for="Received_Date" />
+                                    <apex:outputText value="{0,date,MM/dd/yyyy}" id="Received_Date">
+                                        <apex:param value="{!ClaimsDetail.ReceivedDate}" />
+                                    </apex:outputText>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:17%">
+                                    <apex:outputLabel value="Referral Number" for="Referral_Number" />
+                                    <a href="#"
+                                        onClick="OpenReferralDetail('{!ClaimsDetail.ReferralNumber}');return false">
+                                        {!ClaimsDetail.ReferralNumber} <!-- apex:outputText value="{!ClaimsDetail.ReferralNumber}" id="Referral_Number"/ -->
+                                    </a>
+                                </apex:pageBlockSectionItem>
+                                <apex:outputPanel style="width:30%"></apex:outputPanel>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:17%">
+                                    <apex:outputLabel value="Patient Account Number"
+                                        for="Patient_Account_Number" />
+                                    <apex:outputText value="{!ClaimsDetail.PatientAccountNumber}"
+                                        id="Patient_Account_Number" />
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:17%">
+                                    <apex:outputLabel value="Bill Type" for="Bill_Type" />
+                                    <apex:outputText value="{!ClaimsDetail.BillType}"
+                                        id="Bill_Type" />
+                                </apex:pageBlockSectionItem>
+                                <apex:outputPanel style="width:30%"></apex:outputPanel>
+                            </apex:pageblockSection>
+
+                            <apex:pageblockSection columns="1" title="Claim Totals - UHC"
+                                html-auto-doc="true">
+                                <apex:pageBlockTable value="{!ClaimsDetail}" var="c">
+                                    <apex:column value="{!'Tertiary'}" headerValue="Status" />
+                                    <apex:column headerValue="Total Charged">
+                                        <apex:outputText value="${0, number, ###,##0.00}"
+                                            id="Chargedprimary">
+                                            <apex:param value="{!c.TotalCharged}" />
+                                        </apex:outputText>
+                                    </apex:column>
+                                    <apex:column headerValue="Total Not Covered">
+                                        <apex:outputText value="${0, number, ###,###,##0.00}"
+                                            id="Notcoveredprimary">
+                                            <apex:param value="{!c.TotalNotCovered}" />
+                                        </apex:outputText>
+                                    </apex:column>
+                                    <apex:column headerValue="Total Allowed">
+                                        <apex:outputText value="${0, number, ###,##0.00}"
+                                            id="Allowedprimary">
+                                            <apex:param value="{!c.TotalAllowed}" />
+                                        </apex:outputText>
+                                    </apex:column>
+                                    <apex:column headerValue="Total Reimbursement Reduction"
+                                        value="{!c.TotalAllowed}" />
+                                    <apex:column headerValue="Interest Paid"
+                                        value="{!c.TotalAllowed}" />
+                                    <apex:column headerValue="NY Surcharge Paid"
+                                        value="{!c.TotalAllowed}" />
+                                    <apex:column headerValue="Overpayment Withheld"
+                                        value="{!c.TotalAllowed}" />
+                                    <apex:column headerValue="Total Health Plan Paid"
+                                        value="{!c.TotalAllowed}" />
+                                </apex:pageBlockTable>
+                                <apex:outputText value="Member Responsibility" />
+                                <apex:pageBlockTable value="{!ClaimsDetail}" var="c">
+                                    <apex:column headerValue="Not Covered">
+                                        <apex:outputText value="${0, number, ###,##0.00}"
+                                            id="Not_Covered">
+                                            <apex:param value="{!c.MRNotCovered}" />
+                                        </apex:outputText>
+                                    </apex:column>
+                                    <apex:column headerValue="Deductible">
+                                        <apex:outputText value="${0, number, ###,##0.00}"
+                                            id="Allowedprimary">
+                                            <apex:param value="{!c.MRDeductible}" />
+                                        </apex:outputText>
+                                    </apex:column>
+                                    <apex:column headerValue="Copay">
+                                        <apex:outputText value="${0, number, ###,##0.00}" id="Copay">
+                                            <apex:param value="{!c.MRCopay}" />
+                                        </apex:outputText>
+                                    </apex:column>
+                                    <apex:column headerValue="Coinsurance" value="{!c.MRCopay}" />
+                                    <apex:column headervalue="Reimbursement Reduction"
+                                        value="{!c.MRCopay}" />
+                                    <apex:column headervalue="Total Member Responsibility"
+                                        value="{!c.MRCopay}" />
+                                </apex:pageBlockTable>
+                                <apex:outputText value="Provider Responsibility" />
+                                <apex:pageBlockTable value="{!ClaimsDetail}" var="c">
+                                    <apex:column headerValue="Not Covered" colspan="6" width="43%">
+                                        <apex:outputText value="${0, number, ###,##0.00}">
+                                            <apex:param value="{!c.PRNotCovered}" />
+                                        </apex:outputText>
+                                    </apex:column>
+
+
+
+                                    <apex:column headerValue="Reimbursement Reduction" colspan="1">
+                                        <apex:outputText value="${0, number, ###,##0.00}">
+                                            <apex:param value="{!c.PRNotCovered}" />
+                                        </apex:outputText>
+                                    </apex:column>
+                                    <apex:column headervalue="Total  Write Off"
+                                        value="{!'Not Available'}" colspan="1" />
+                                </apex:pageBlockTable>
+                            </apex:pageblockSection>
+
+                            <apex:pageblockSection columns="1" title="Claim Totals - COB"
+                                html-auto-doc="true">
+                                <apex:pageBlockTable value="{!lstwrpClaimTotalCOB}" var="c">
+                                    <apex:column headerValue="Status" value="{!c.COBStatus}" />
+                                    <apex:column headerValue="Charged" value="{!''}" />
+                                    <apex:column headerValue="Not Covered" value="{!''}" />
+                                    <apex:column headerValue="Allowed" value="{!''}" />
+                                    <apex:column headerValue="Paid" value="{!''}" />
+                                    <apex:column headerValue="Member Responsibility" value="{!''}" />
+                                    <apex:column headerValue="Provider Responsibility"
+                                        value="{!''}" />
+                                </apex:pageBlockTable>
+
+                            </apex:pageblockSection>
+                            <apex:pageblockSection columns="3"
+                                title="Medical Payment Details" html-auto-doc="true">
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:15%">
+                                    <apex:outputLabel value="Payment Total"
+                                        for="Total_Check_Amount" />
+                                    <apex:outputText value="${0, number, ###,##0.00}"
+                                        id="Total_Check_Amount">
+                                        <apex:param value="{!ClaimsDetail.TotalCheckAmount}" />
+                                    </apex:outputText>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:15%">
+                                    <apex:outputLabel value="Bulk Check" for="Bulk_Check" />
+                                    <apex:outputText value="Yes" id="Bulk_Check">
+                                    </apex:outputText>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:15%">
+                                    <apex:outputLabel value="Cashed Date" for="Cashed_Date" />
+                                    <apex:outputText value="{0,date,MM/dd/yyyy}" id="Cashed_Date">
+                                        <apex:param value="{!ClaimsDetail.CashedDate}" />
+                                    </apex:outputText>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:15%">
+                                    <apex:outputLabel value="Payment Type" for="Payment_Type" />
+                                    <apex:outputText value="{!ClaimsDetail.PaymentType}"
+                                        id="Payment_Type" />
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:15%">
+                                    <apex:outputLabel value="Check Status" for="Check_Status" />
+                                    <apex:outputText value="{!ClaimsDetail.CheckStatus}"
+                                        id="Check_Status" />
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:15%">
+                                    <apex:outputLabel value="Void/Stop Date" for="Void_Stop_Date" />
+                                    <apex:outputText value="{0,date,MM/dd/yyyy}"
+                                        id="Void_Stop_Date">
+                                        <apex:param value="{!ClaimsDetail.VoidStopDate}" />
+                                    </apex:outputText>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:15%">
+                                    <apex:outputLabel value="Series Designator"
+                                        for="Series_Designator" />
+                                    <apex:outputText value="{!ClaimsDetail.SeriesDesignator}"
+                                        id="Series_Designator" />
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:15%">
+                                    <apex:outputLabel value="Processed Date" for="Processed_Date" />
+                                    <apex:outputText value="{0,date,MM/dd/yyyy}"
+                                        id="Processed_Date">
+                                        <apex:param value="{!ClaimsDetail.ProcessedDate}" />
+                                    </apex:outputText>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:15%">
+                                    <apex:outputLabel value="Returned Date" for="Returned_Date" />
+                                    <apex:outputText value="{0,date,MM/dd/yyyy}" id="Returned_Date">
+                                        <apex:param value="{!ClaimsDetail.ReturnedDate}" />
+                                    </apex:outputText>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:15%">
+                                    <apex:outputLabel value="Check/EFT Number" for="Check_Epayment" />
+                                    <apex:outputText id="Check_Epayment">
+                                        <a href="#" onclick="openpayments()">{!ClaimsDetail.CheckEpayment}</a>
+                                    </apex:outputText>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:15%">
+                                    <apex:outputLabel value="Issued Date" for="Issued_Date" />
+                                    <apex:outputText value="{0,date,MM/dd/yyyy}" id="Issued_Date">
+                                        <apex:param value="{!ClaimsDetail.IssuedDate}" />
+                                    </apex:outputText>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:15%">
+                                    <apex:outputLabel value="Remailed Date " for="Remailed_Date" />
+                                    <apex:outputText value="{0,date,MM/dd/yyyy}" id="Remailed_Date">
+                                        <apex:param value="{!ClaimsDetail.RemailedDate}" />
+                                    </apex:outputText>
+                                </apex:pageBlockSectionItem>
+                            </apex:pageblockSection>
+                            <BR />
+                            <apex:pageBlock title="Payee Information" html-auto-doc="true">
+                                <apex:pageBlockSection columns="1">
+                                    <apex:pageBlockTable value="{!ClaimsDetail}" var="p">
+                                        <apex:column headerValue="PTI Indicator">
+                        {!p.PTIIndicator}
+                    </apex:column>
+                                        <apex:column headerValue="Payee Name">
+                        {!p.PayeeName}
+                    </apex:column>
+                                        <apex:column value="{!p.PayeeAddress.line1}"
+                                            headerValue="Address Line 1" />
+                                        <apex:column value="{!p.PayeeAddress.line2}"
+                                            headerValue="Address Line 2" />
+                                        <apex:column value="{!p.PayeeAddress.city}" headerValue="City" />
+                                        <apex:column value="{!p.PayeeAddress.state.code }"
+                                            headerValue="State" />
+                                        <apex:column value="{!p.PayeeAddress.postalCode[0].part1} - {!p.PayeeAddress.postalCode[0].part2}"
+                                            headerValue="Zip" />
+
+
+                                    </apex:pageBlockTable>
+                                </apex:pageBlockSection>
+                            </apex:pageBlock>
+
+                            <apex:pageblockSection columns="3"
+                                title="Consumer Accounts Payment Details" html-auto-doc="true">
+
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:16%">
+                                    <apex:outputLabel value="HRA Processed Date"
+                                        for="HRA_Processed_Date" />
+                                    <apex:outputText value="{0,date,MM/dd/yyyy}"
+                                        id="HRA_Processed_Date">
+                                        <apex:param value="{!ClaimsDetail.HRAProcessedDate}" />
+                                    </apex:outputText>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:16%">
+                                    <apex:outputLabel value="FSA Processed Date"
+                                        for="FSA_Processed_Date" />
+                                    <apex:outputText value="{0,date,MM/dd/yyyy}"
+                                        id="FSA_Processed_Date">
+                                        <apex:param value="{!ClaimsDetail.FSAProcessedDate}" />
+                                    </apex:outputText>
+                                </apex:pageBlockSectionItem>
+                                <apex:outputPanel style="width:30%"></apex:outputPanel>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:16%">
+                                    <apex:outputLabel value="HRA Payment" for="HRA_Payment" />
+                                    <apex:outputText value="${0, number, ###,##0.00}"
+                                        id="HRA_Payment">
+                                        <apex:param value="{!ClaimsDetail.HRAPayment}" />
+                                    </apex:outputText>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageBlockSectionItem dataStyle="width:15%"
+                                    labelStyle="width:16%">
+                                    <apex:outputLabel value="FSA Payment" for="FSA_Payment" />
+                                    <apex:outputText value="${0, number, ###,##0.00}"
+                                        id="FSA_Payment">
+                                        <apex:param value="{!ClaimsDetail.FSAPayment}" />
+                                    </apex:outputText>
+                                </apex:pageBlockSectionItem>
+                                <apex:outputPanel style="width:30%"></apex:outputPanel>
+                            </apex:pageblockSection>
+            </apex:pageBlock>
+            <apex:pageBlock title="Remark Codes" rendered="{!noresult}"
+                html-auto-doc="true">
+                <apex:pageBlockSection columns="1">
+                    <apex:pageBlockTable value="{!Claimsdetail.lstwrpRemarkCodes}"
+                        var="a">
+                        <apex:column headerValue="Procedure">
+                        {!a.Procedure}
+                    </apex:column>
+                        <apex:column headerValue="Remark Code">
+                        {!a.RemarkCode}
+                    </apex:column>
+                        <apex:column headerValue="Remark Code Description">
+                        {!a.RemarkCodeDesc}
+                    </apex:column>
+
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+
+            <apex:pageBlock title="Service Lines" rendered="{!noresult}"
+                html-auto-doc="true">
+                <apex:pageBlockSection columns="1">
+                    <apex:pageBlockTable value="{!Claimsdetail.lstwrpServiceLines}"
+                        var="a">
+                        <apex:column headerValue="Benefit Level">
+                        {!a.BenefitLevel}
+                    </apex:column>
+                        <apex:column headerValue="Place of Service">
+                        {!a.PlaceofService}
+                    </apex:column>
+                        <apex:column headerValue="Procedure">
+                        {!a.Procedure}
+                    </apex:column>
+                        <apex:column headerValue="Modifier">
+                        {!a.Modifier}
+                    </apex:column>
+                        <apex:column headerValue="Remark Code">
+                        {!a.RemarkCode}
+                    </apex:column>
+                        <apex:column headerValue="Dx Pointer">
+                        {!a.DxPointer}
+                    </apex:column>
+                        <apex:column headerValue="Units">
+                        {!a.Units}
+                    </apex:column>
+                        <apex:column headerValue="Start Date">
+
+                            <apex:outputText value="{0,date,MM/dd/yyyy}" id="SLStart_Date">
+                                <apex:param value="{!a.StartDate}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="End Date ">
+
+                            <apex:outputText value="{0,date,MM/dd/yyyy}" id="SLEnd_Date">
+                                <apex:param value="{!a.EndDate}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Override ">
+                        {!a.strOverride}
+                    </apex:column>
+                        <apex:column headerValue="Charged" style="text-align: right;">
+                            <apex:outputText value="{0, number, $###,##0.00}">
+                                <apex:param value="{!a.Charged}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Allowed" style="text-align: right;">
+                            <apex:outputText value="{0, number, $###,##0.00}">
+                                <apex:param value="{!a.Allowed}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Not Covered" style="text-align: right;">
+                            <apex:outputText value="{0, number, $###,##0.00}">
+                                <apex:param value="{!a.NotCovered}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Deductible" style="text-align: right;">
+                            <apex:outputText value="{0, number, $###,##0.00}">
+                                <apex:param value="{!a.Deductible}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Paid" style="text-align: right;">
+                            <apex:outputText value="{0, number, $###,##0.00}">
+                                <apex:param value="{!a.Paid}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Percent">
+                        {!a.Percent}%
+                    </apex:column>
+                        <apex:column headerValue="Authorization #">
+                        {!a.Authorization}
+                    </apex:column>
+
+
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            <apex:pageBlock title="Claim Diagnosis" rendered="{!noresult}"
+                html-auto-doc="true">
+                <apex:pageBlockSection columns="1">
+                    <apex:pageBlockTable value="{!ClaimsDetail.lstwrpClaimDiagnosis}"
+                        var="a">
+                        <apex:column headerValue="Diagnosis Code">
+                        {!a.DiagnosisCode}
+                    </apex:column>
+                        <apex:column headerValue="Diagnosis Description">
+                        {!a.DiagnosisDescription}
+                    </apex:column>
+                        <apex:column headerValue="POA">
+                        {!a.POA}
+                    </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            <apex:pageBlock title="Reimbursement Reduction"
+                rendered="{!noresult}" html-auto-doc="true">
+                <apex:pageBlockSection columns="1">
+                    <apex:pageBlockTable value="{!lstwrpReimbReduction}" var="a">
+                        <apex:column headerValue="Type">
+                        {!a.Type}
+                    </apex:column>
+                        <apex:column headerValue="Remark Code">
+                        {!a.RemarkCode}
+                    </apex:column>
+                        <apex:column headerValue="Amount" style="text-align: right;">
+                            <apex:outputText value="{0, number, $###,##0.00}">
+                                <apex:param value="{!a.Amount}" />
+                            </apex:outputText>
+                        </apex:column>
+
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            <apex:pageBlock title="Claim Edits" rendered="{!noresult}"
+                html-auto-doc="true">
+                <apex:pageBlockSection columns="1">
+                    <apex:pageBlockTable value="{!lstwrpICESLogic}" var="a">
+                        <apex:column headerValue="Edit Type">
+                        {!a.EditType}
+                    </apex:column>
+                        <apex:column headerValue="Edit Action">
+                        {!a.EditAction}
+                    </apex:column>
+                        <apex:column headerValue="Edit Description">
+                        {!a.EditDescription}
+                    </apex:column>
+
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+
+            <apex:pageBlock mode="maindetail">
+                <apex:pageblockSection columns="3" collapsible="true"
+                    title="In/Out Patient Information" html-auto-doc="true">
+
+                    <apex:pageBlockSectionItem dataStyle="width:15%"
+                        labelStyle="width:15%">
+                        <apex:outputLabel value="Surgery Date" for="Surgery_Date" />
+                        <apex:outputText value="{0,date,MM/dd/yyyy}" id="Surgery_Date">
+                            <apex:param value="{!ClaimsDetail.SurgeryDate}" />
+                        </apex:outputText>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:15%"
+                        labelStyle="width:15%">
+                        <apex:outputLabel value="Semi-Private Room"
+                            for="Semi_Private_Room" />
+                        <apex:outputText value="${0, number, ###,##0.00}"
+                            id="Semi_Private_Room">
+                            <apex:param value="{!ClaimsDetail.SemiPrivateRoom}" />
+                        </apex:outputText>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:15%"
+                        labelStyle="width:15%">
+                        <apex:outputLabel value="DRG Number" for="DRG_Number" />
+                        <apex:outputText value="{!ClaimsDetail.DRGNumber}" id="DRG_Number" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:15%"
+                        labelStyle="width:15%">
+                        <apex:outputLabel value="Discharge" for="Discharge" />
+                        <apex:outputText value="{0,date,MM/dd/yyyy}" id="Discharge">
+                            <apex:param value="{!ClaimsDetail.DischargeDate}" />
+                        </apex:outputText>
+                    </apex:pageBlockSectionItem>
+                    <apex:outputPanel ></apex:outputPanel>
+                    <apex:pageBlockSectionItem dataStyle="width:15%"
+                        labelStyle="width:15%">
+                        <apex:outputLabel value="DRG Grouper" for="DRG_Grouper" />
+                        <apex:outputText value="{!ClaimsDetail.DRGGrouper}"
+                            id="DRG_Grouper" />
+                    </apex:pageBlockSectionItem>
+                </apex:pageblockSection>
+            </apex:pageBlock>
+            <a name="surgical-procedure"></a>
+            <apex:pageBlock title="Surgical Procedures" rendered="{!noresult}"
+                html-auto-doc="true">
+                <apex:pageBlockSection columns="1">
+                    <apex:pageBlockTable value="{!lstwrpSurgicalProc}" var="a">
+                        <apex:column headerValue="Surgical Procedure">
+                        {!a.SurgicalProcedure}
+                    </apex:column>
+                        <apex:column headerValue="Description">
+                        {!a.Description}
+                    </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            <apex:pageBlock title="Cause" rendered="{!noresult}"
+                html-auto-doc="true">
+                <apex:pageBlockSection columns="1">
+                    <apex:pageBlockTable value="{!lstwrpCause}" var="a">
+                        <apex:column headerValue="Cause Code">
+                        {!a.CauseCode}
+                    </apex:column>
+                        <apex:column headerValue="Cause Description">
+                        {!a.CauseDescription}
+                    </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+
+        </apex:outputPanel>
+    </apex:form>
+    <script type='text/javascript'>  
+        $(document).ready(function() {          
+            $("[id$='LinkSurgicalProcedures']").attr('href',"#surgical-procedure");
+                      
+            acet.autodoc.startAutodoc();
+            acet.autodoc.createCommentsbox();
+            
+            //send over claim detail autodoc to claim search when requested
+            var subjectId = '{!Subject.Id}';
+            sforce.console.addEventListener('RequestClaimDetail_'.concat(subjectId), function(r){ 
+                sforce.console.getEnclosingTabId(function(result){                                        
+                    var res = {};   
+                    res.subTabId = result.id;           
+                    res.doc = acet.autodoc.saveAutodoc();                                                  
+                    sforce.console.fireEvent('ReceiveClaimDetail_'.concat(subjectId), JSON.stringify(res)); 
+                }); 
+                                                       
+            });
+            
+            sforce.console.addEventListener('RequestClaimPaymentDetail_'.concat(subjectId), function(r){                 
+                sforce.console.getEnclosingTabId(function(result){                                        
+                    var res = {};   
+                    res.subTabId = result.id;           
+                    res.doc = acet.autodoc.saveAutodoc();                                                                
+                    sforce.console.fireEvent('ReceiveClaimPaymentDetail_'.concat(subjectId), JSON.stringify(res)); 
+                });                                       
+            });
+                                    
+            //sync comments between claim search and claim details tabs
+            //only fire at last keyup
+            var timer;
+            $("#autodocComments").keyup(function(){
+                clearTimeout(timer);  
+                timer = setTimeout(function(){
+                    sforce.console.fireEvent('ClaimCommentsUpdated_'.concat(subjectId), $("#autodocComments").val()); 
+                }, 500);   
+            }); 
+            
+            sforce.console.addEventListener('ClaimCommentsUpdated_'.concat(subjectId), function(r){
+                $("#autodocComments").val(r.message);
+            });
+            
+            //sync comment from claim search when detail page is loaded
+            sforce.console.fireEvent('RequestClaimComments_'.concat(subjectId), subjectId);
+            
+            //close self when requested from claim search page
+            sforce.console.addEventListener('CloseClaimDetailSubTab_'.concat(subjectId), function(r){
+                sforce.console.getEnclosingTabId(function(result){
+                    sforce.console.closeTab(result.id);        
+                });
+            });
+                        
+        }); 
+        function openpayments(){ 
+            var hightlightPanelInfo = $("[id$='highlightPanelInfo']").val();       
+            var url = 'interactionId={!JSENCODE(Interaction.Id)}' +'&' + 'contactId={!JSENCODE(Subject.Id)}' + '&' + 'sourceOriginator={!sourceOriginator}' + '&' + 'additionalInfo=' + hightlightPanelInfo; 
+            if(url !=''){
+                 url = 'apex/ACETClaimPayment?'+url;
+                url = url + '&' +'DOB={!AdditionalInfo.DOB}' + '&' + 'SitusState={!AdditionalInfo.SitusState}'+'&'+ 'EffectiveDate={!AdditionalInfo.EffectiveDate}'+'&'+'EndDate={!AdditionalInfo.EndDate}';
+                url = url + '&' +'SeriesDesignator={!ClaimsDetail.SeriesDesignator}' + '&' + 'CheckNumber={!ClaimsDetail.CheckEpayment}';
+                  sforce.console.getFocusedPrimaryTabId(function(result){
+                    sforce.console.openSubtab(result.id,url, true,'Payment Search', null);
+                });  
+               
+                }
+        }
+  </script>
+    <style type="text/css">
+.imgclass:hover {
+    background-image: url('/img/help/helpOrbs.gif');
+    background-repeat: no-repeat;
+    width: 16px;
+    height: 15px;
+    background-position: right;
+}
+
+.imgclass {
+    background-image: url('/img/help/helpOrbs.gif');
+    background-repeat: no-repeat;
+    width: 16px;
+    height: 15px;
+}
+
+.rightclass {
+    text-align: right;
+}
+</style>
+
+    <apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/main.js')}" />
+</apex:page>

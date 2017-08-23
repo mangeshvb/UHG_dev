@@ -1,0 +1,506 @@
+<apex:page controller="ACETClaimPaymentController" sidebar="false"
+    title="Claims Payments" id="mypage">
+    <apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+    <apex:includeScript value="/support/console/30.0/integration.js" />
+    <apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/main.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.ACETResources, '/css/m/memberdetail.css')}" />
+    <apex:stylesheet value="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+    <apex:includeScript value="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></apex:includeScript>
+    <style>
+.autodoc {
+    vertical-align: middle;
+}
+</style>
+    <apex:form id="myform">
+        <div id="autodocCommentsContainer"
+            style="position: fixed; bottom: 0; right: 0; width: 400px; height: 100px; background-color: #E1E0DA; padding-left: 10px; padding-right: 10px; border: 3px solid #D18361; z-index: 10000">
+            <div id="autodocCommentsHeader"
+                style="width: 100%; height: 24px; background-color: #E1E0DA; padding-top: 4px;">
+                <div style="float: left;">
+                    <img src="{!URLFOR($Resource.ACETResources, '/img/comments.png')}"
+                        style="vertical-align: middle; margin-right: 2px;" /> <span>Comments</span>
+                </div>
+                <div style="float: right;">
+                    <img id="btnMinimize"
+                        src="{!URLFOR($Resource.ACETResources, '/img/minimize.png')}" />
+                </div>
+            </div>
+            <textarea id="autodocComments"
+                style="width: 100%; height: 50px; overflow: auto; border: none;" />
+            <div id="autodocCommentsFooter"
+                style="width: 100%; height: 20px; background-color: #E1E0DA; bottom: 0" />
+        </div>
+        <apex:actionFunction name="showDetailsSection"
+            action="{!showDetailsSection}" reRender="pnlDetails"
+            status="PaymentSearchStatus"
+            oncomplete="acet.autodoc.startAutodoc();">
+            <apex:param value="" name="param1" assignTo="{!ShowDetails}" />
+        </apex:actionFunction>
+        <c:ACETInteractionHighlightsPanel InteractionAtt="{!Interaction}"
+            SubjectAtt="{!Subject}" AdditionalInfoAtt="{!AdditionalInfo}"
+            html-auto-doc="auto"></c:ACETInteractionHighlightsPanel>
+        <apex:sectionHeader title="Payment Search" />
+        <apex:outputPanel id="pnlMessages">
+            <apex:pageMessages />
+        </apex:outputPanel>
+        <c:ACETCaseActions attrCaseDataWrapper="{!wrapper}"
+            attrShowSaveAndCloseButton="false" attrShowSaveButton="true"
+            attrShowMisdirectButton="true" 
+            attrSourceOriginator="{!Interaction.Interaction_Type__c}"
+            attrInteractionId="{!wrapper.Interaction.Id}"
+            attrSubjectId="{!wrapper.Subject.Id}" 
+            attrCallTopic="View Payments" /> 
+            
+        <apex:pageBlock id="pbSearch" title="">
+            <apex:pageBlockSection columns="3">
+                <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                    labelStyle="width:16.67%;">
+                    <apex:outputLabel value="Check/EFT Number" for="checknumber"></apex:outputLabel>
+                    <apex:outputPanel styleclass="dataCol">
+                        <div class="requiredInput">
+                            <div class="requiredBlock"></div>
+                            <apex:inputText id="checknumber" value="{!CheckNumber}" />
+                        </div>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                    labelStyle="width:16.67%;">
+                    <apex:outputLabel value="Series Designator" for="seriesdesignator"></apex:outputLabel>
+                    <apex:inputText id="seriesdesignator" value="{!SeriesDesignator}" />
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                    labelStyle="width:16.67%;">
+                    <apex:outputLabel ></apex:outputLabel>
+                </apex:pageBlockSectionItem>
+                
+
+                <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                    labelStyle="width:16.67%;">
+                    <apex:outputLabel value="Patient Last Name" for="lastname"></apex:outputLabel>
+                    <apex:inputText id="lastname" styleClass="patient"
+                        value="{!LastName}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                    labelStyle="width:16.67%;">
+                    <apex:outputLabel value="Patient First Name" for="firstname"></apex:outputLabel>
+                    <apex:inputText styleClass="patient" id="firstname"
+                        value="{!FirstName }" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                    labelStyle="width:16.67%;">
+                    <apex:outputLabel value="Member ID" for="memberid"></apex:outputLabel>
+                    <apex:inputText id="memberid" styleClass="patient"
+                        value="{!MemberId}" />
+                </apex:pageBlockSectionItem>
+      
+            </apex:pageBlockSection>
+            <apex:pageBlockButtons location="bottom">
+                <apex:actionFunction action="{!search}" name="search"
+                    reRender="pnlresults,pnlMessages" status="PaymentSearchStatus"
+                    oncomplete="selectPayment();return true;" />
+                <apex:actionFunction action="{!clear}" name="clear"
+                    reRender="pnlDetails,pnlresults,pnlMessages" />
+                <input type="button" id="btnSearch" class="btn" value="Search"
+                    onclick="return validatecheckno();" />
+                <input type="button" id="btnClearPatient" class="btn"
+                    value="Clear Patient" onclick="return clearPatientForm();" />
+                <input type="button" id="btnClearAll" class="btn" value="Clear All"
+                    onclick="return clearForm();" />
+
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+        <apex:outputPanel id="pnlresults">
+            <apex:pageBlock id="pbResults" title="Payment Search Results"
+                rendered="{!ShowSearch}">
+                <apex:inputHidden id="selectedPaymentGUID"
+                    value="{!SelectedPaymentGUID}" />
+                <apex:inputHidden id="PaymentSize" value="{!PaymentSize}" />
+                <apex:pageBlockSection columns="1" html-auto-doc="true" html-auto-doc-case-items="true" >
+                    <apex:pageBlockTable value="{!Payments}" var="w" id="results-table">
+                        <apex:column headerValue="Series Designator">{!w.SeriesDesignator}
+                                  <div auto-doc-item="false">
+                                <apex:inputHidden id="wGUID" value="{!w.GUID}" />
+                            </div>
+                        </apex:column>
+                        <apex:column value="{!w.PaymentTotal}" headerValue="Payment Total" />
+                        <apex:column value="{!w.checkDate}" headerValue="Check Date" />
+                        <apex:column value="{!w.PayeeName}" headerValue="Payee Name" />
+                        <apex:column value="{!w.PayeeAddress}" headerValue="Payee Address" />
+                        <apex:column value="{!w.City}" headerValue="City" />
+                        <apex:column value="{!w.State}" headerValue="State" />
+                        <apex:column value="{!w.Zip}" headerValue="Zip" />
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+        </apex:outputPanel>
+        <apex:actionStatus id="PaymentSearchStatus">
+            <apex:facet name="start">
+                <p style="text-align: center;">
+                    <img src="/img/loading.gif" />&nbsp;Loading...
+                </p>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:outputPanel id="pnlDetails">
+            <apex:pageBlock id="pbDetailsblank" rendered="{!ShowDetails}"></apex:pageBlock>
+            <apex:pageBlock id="pbDetails" rendered="{!ShowDetails}"
+                mode="maindetail">
+                <apex:pageBlockSection title="Payment Details" columns="3"
+                    html-auto-doc="true">
+                    <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                        labelStyle="width:16.67%;">
+                        <apex:outputLabel value="Payment Total" for="PaymentTotal" />
+                        <apex:outputText value="{!SelectedPayment.PaymentTotal}"
+                            id="PaymentTotal" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                        labelStyle="width:16.67%;">
+                        <apex:outputLabel value="Bulk Check" for="BulkCheck" />
+                        <apex:outputText value="{!SelectedPayment.BulkCheck}"
+                            id="BulkCheck" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                        labelStyle="width:16.67%;">
+                        <apex:outputLabel value="Void/Stop Date" for="VoidStopDate" />
+                        <apex:outputText value="{0,date,MM/dd/yyyy}" id="VoidStopDate">
+                            <apex:param value="{!checks[0].VoidStopDate}" />
+                        </apex:outputText>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                        labelStyle="width:16.67%;" id="ptsecitem">
+                        <apex:outputLabel value="Payment Type" for="txtPaymentType" />
+                        <apex:outputText value="{!SelectedPayment.PaymentType}"
+                            id="txtPaymentType" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                        labelStyle="width:16.67%;">
+                        <apex:outputLabel value="Check Status" for="CheckStatus" />
+                        <apex:outputText value="{!SelectedPayment.CheckStatus}"
+                            id="CheckStatus" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                        labelStyle="width:16.67%;">
+                        <apex:outputLabel value="Returned Date" for="ReturnedDate" />
+                        <apex:outputText value="{!checks[0].ReturnedDate}"
+                            id="ReturnedDate" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                        labelStyle="width:16.67%;">
+                        <apex:outputLabel value="Series Designator" for="SeriesDesignator" />
+                        <apex:outputText value="{!SelectedPayment.SeriesDesignator}"
+                            id="SeriesDesignator" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                        labelStyle="width:16.67%;">
+                        <apex:outputLabel value="Issued Date" for="IssuedDate" />
+                        <apex:outputText value="{!SelectedPayment.IssuedDate}"
+                            id="IssuedDate" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                        labelStyle="width:16.67%;">
+                        <apex:outputLabel value="Remailed Date" for="RemailedDate" />
+                        <apex:outputText value="{!checks[0].RemailedDate}"
+                            id="RemailedDate" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                        labelStyle="width:16.67%;">
+                        <apex:outputLabel value="Check/EFT Number" for="CheckEFTNumber" />
+                        <apex:outputText value="{!SelectedPayment.CheckEFTNumber}"
+                            id="CheckEFTNumber" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:16.67%;"
+                        labelStyle="width:16.67%;">
+                        <apex:outputLabel value="Cashed Date" for="CashedDate" />
+                        <apex:outputText value="{0,date,MM/dd/yyyy}" id="CashedDate">
+                            <apex:param value="{!checks[0].CashedDate}" />
+                        </apex:outputText>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                <apex:pageBlockSection columns="1" title="Payee Information"
+                    html-auto-doc="true">
+                    <apex:pageBlockTable value="{!wrapperpayeeinfo }" var="w"
+                        title="Payee Information">
+                        <apex:column headerValue="Payee Type">
+                                {!w.PayeeType}
+                            </apex:column>
+                        <apex:column headerValue="Payee ID">
+                                {!w.PayeeID}
+                            </apex:column>
+                        <apex:column headerValue="Payee Name">
+                                {!w.PayeeName}
+                            </apex:column>
+                        <apex:column headerValue="Payee Address Line 1">
+                                {!w.PayeeAddressLine1}
+                            </apex:column>
+                        <apex:column headerValue="Payee Address Line 2">
+                                {!w.PayeeAddressLine2}
+                            </apex:column>
+                        <apex:column headerValue="City">
+                                {!w.City}
+                            </apex:column>
+                        <apex:column headerValue="State">
+                                {!w.State}
+                            </apex:column>
+                        <apex:column headerValue="Zip">
+                                {!w.Zip}
+                            </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+                <apex:pageBlockSection id="sf_id" columns="1" title="Paid Claims"
+                    html-auto-doc="true">
+                    <apex:pageBlockTable value="{!SelectedPayment.lstClaims}" var="c">
+                        <apex:column headerValue="Claim Number" styleclass="keyfieldId" >
+                            <A HREF="#"
+                                onClick="OpenClaimDetail('{!c.ClaimNumber}');return false">
+                                {!c.ClaimNumber}</A>
+                        </apex:column>
+                        <apex:column headerValue="Member ID">
+                        {!c.MemberID}
+                    </apex:column>
+                        <apex:column headerValue="Policy Number">
+                        {!c.PolicyNumber}
+                    </apex:column>
+                        <apex:column headerValue="Patient Account Number">
+                        {!c.PatientAccountNumber}
+                    </apex:column>
+                        <apex:column headerValue="First Name">
+                        {!c.FirstName}
+                    </apex:column>
+                        <apex:column headerValue="Last Name">
+                        {!c.LastName}
+                    </apex:column>
+                        <apex:column headerValue="Relationship">
+                        {!c.Relationship}
+                    </apex:column>
+                        <apex:column headerValue="Paid Amount">
+                        {!c.PaidAmount}
+                    </apex:column>
+                        <apex:column headerValue="Start Date">
+                            <apex:outputText value="{0,date,MM/dd/yyyy}" id="Start_Date">
+                                <apex:param value="{!c.StartDate}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="End Date ">
+                            <apex:outputText value="{0,date,MM/dd/yyyy}" id="End_Date">
+                                <apex:param value="{!c.EndDate}" />
+                            </apex:outputText>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton id="btnCheckNumber" value="Check Image"
+                        disabled="{!disableChecknumber}" /> 
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<apex:outputLabel style="" value="No image available. Payment made electronically."
+                        rendered="{!disableChecknumber}"></apex:outputLabel>
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+        </apex:outputPanel>
+        <c:ACETCaseActions attrCaseDataWrapper="{!wrapper}"
+            attrShowSaveAndCloseButton="false" attrShowSaveButton="true"
+            attrShowMisdirectButton="true" 
+            attrSourceOriginator="{!Interaction.Interaction_Type__c}"
+            attrInteractionId="{!wrapper.Interaction.Id}"
+            attrSubjectId="{!wrapper.Subject.Id}" attrCallTopic="View Payments" 
+            attrLocation="bottom"   />
+    </apex:form>
+
+    <script>
+         
+         function clearForm(){
+            $("[id$='btnClearAll']").closest('form').find("input[type=text]").val("");
+            clear();  
+            return true;
+         }   
+         function clearPatientForm(){
+            $(".patient").val(""); 
+            clear();
+            return true; 
+         }
+         function OpenClaimDetail(claimid) {
+            var url = '/apex/ACETClaimDetail?id='+claimid+ '&'+'interactionId={!JSENCODE(Interaction.Id)}' +'&' + 'contactId={!JSENCODE(Subject.Id)}'+ '&' + 'sourceOriginator={!sourceOriginator}'+ '&' +'additionalInfo={!hpAdditionInfoStr}' ;
+            //addCaseItem(claimid);
+            sforce.console.getFocusedPrimaryTabId(function(result){
+            sforce.console.openSubtab(result.id, url, true,'Claim - '+claimid, null);
+            
+            });
+         }      
+         function validatecheckno(){ 
+            var $checknumber= $("[id$='checknumber']");                                              
+            $checknumber.removeClass("error").parent().find(".errorMsg").remove(); 
+            var result = true;                    
+            if($checknumber.val() == ""){ 
+                var errorMsg = "You must enter a value"; 
+                $checknumber.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>'); 
+                result = false; 
+            }else{
+                search();
+            } 
+            return result;             
+        }
+        
+        
+        $(document).ready(function() { 
+           $(document).keypress(
+                 function(event){
+                 if (event.which == '13') {
+                    event.preventDefault();
+                    $("[id$='btnSearch']").trigger('click');
+                 }
+            });         
+           
+         $("[id$='results-table']").find("tr").click(function(){
+                $(this).parent().children().removeClass('active');
+                $(this).addClass('active');
+                 var guid = $(this).find("[id$='wGUID']").val();                
+                $("[id$='selectedPaymentGUID']").val(guid);
+                showDetailsSection(true);                                               
+            });
+            var paymentssize = $("[id$='PaymentSize']").val();          
+            //highlight first row by default
+            if(paymentssize == 1){            
+                $("[id$='results-table']").find("tbody tr:first").addClass('active');
+                var guid = $("[id$='results-table']").find(".active").find("[id$='wGUID']").val();                 
+                $("[id$='selectedPaymentGUID']").val(guid);
+                showDetailsSection(true); 
+            }
+            
+        }); 
+        
+        function selectPayment(){
+            
+            $("[id$='results-table']").find("tr").click(function(){
+                $(this).parent().children().removeClass('active');
+                $(this).addClass('active');
+                 var guid = $(this).find("[id$='wGUID']").val();                
+                $("[id$='selectedPaymentGUID']").val(guid);
+            });
+            var paymentssize = $("[id$='PaymentSize']").val();          
+            //highlight first row by default
+            if(paymentssize >= 1){            
+                $("[id$='results-table']").find("tbody tr:first").addClass('active');
+                var guid = $("[id$='results-table']").find(".active").find("[id$='wGUID']").val();                 
+                $("[id$='selectedPaymentGUID']").val(guid);
+                showDetailsSection(true); 
+            }
+            
+        } 
+     
+   
+   function autodoc(){
+       acet.autodoc.startAutodoc();
+       
+       //request autodoc comments from sub tabs
+       var subjectId = '{!Subject.Id}';
+       console.log(subjectId);
+        
+        acet.autodoc.getAutodocFromSubTabs = function(){
+            acet.autodoc.additionalInfo = '';                                               
+            sforce.console.fireEvent('RequestClaimPaymentDetail_'.concat(subjectId), subjectId);                   
+        };
+        
+        //receive autodoc comments from sub tabs                      
+        sforce.console.addEventListener('ReceiveClaimPaymentDetail_'.concat(subjectId), function(r){                 
+            var res = JSON.parse(r.message);     
+            console.log('res reveived: '+res); 
+            //acet.autodoc.subTabIds.push(res.subTabId);  
+                       
+            if(res.doc){
+                var spaceSeperator = '<div id="seperator" style="width:100%;height:50px;"></div>';                                 
+                acet.autodoc.additionalInfo = acet.autodoc.additionalInfo + spaceSeperator + res.doc;   
+            }              
+            
+            //close sub tab
+            sforce.console.closeTab(res.subTabId);                                      
+        });    
+       
+   }
+   
+   
+   $(document).ready(function(){
+       //request autodoc comments from sub tabs
+       var subjectId = '{!Subject.Id}';       
+        
+        acet.autodoc.getAutodocFromSubTabs = function(){
+            acet.autodoc.additionalInfo = '';                                               
+            sforce.console.fireEvent('RequestClaimPaymentDetail_'.concat(subjectId), subjectId);                   
+        };
+        
+        //receive autodoc comments from sub tabs                      
+        sforce.console.addEventListener('ReceiveClaimPaymentDetail_'.concat(subjectId), function(r){                 
+            var res = JSON.parse(r.message);                
+            //acet.autodoc.subTabIds.push(res.subTabId);  
+                       
+            if(res.doc){
+                var spaceSeperator = '<div id="seperator" style="width:100%;height:50px;"></div>';                                 
+                acet.autodoc.additionalInfo = acet.autodoc.additionalInfo + spaceSeperator + res.doc;   
+            }              
+            
+            //close sub tab
+            sforce.console.closeTab(res.subTabId);                                      
+        });     
+   
+   
+       
+           $("#autodocCommentsContainer").draggable({
+                create: function(event, ui){                    
+                    //fix for IE, does not work when left and top is auto                
+                    $("#autodocCommentsContainer").css('left', $(window).width() - $(this).width() - 25 + 'px');
+                    $("#autodocCommentsContainer").css('top', $(window).height() - $(this).height() - 4 + 'px');                                         
+                }            
+            }).resizable({
+                handles: "n, e, s, w, ne, se, sw, nw"                
+            }); 
+            
+            $("#autodocCommentsContainer").on( "resize", function(event, ui){                
+                $("#autodocComments").height(ui.size.height - 51);                
+                ui.size.height = Math.max(51, ui.size.height);
+                ui.size.width = Math.max(150, ui.size.width);
+                                             
+            });  
+            
+            $("#autodocCommentsContainer").on( "drag", function(event, ui){
+                
+                if(ui.position.top + $(this).height() > $(window).height()){                    
+                    ui.position.top = $(window).height() - $(this).height();    
+                }
+                
+                if(ui.position.left + $(this).width() > $(window).width()){
+                    ui.position.left = $(window).width() - $(this).width();
+                }
+            });
+            
+            
+            $("#btnMinimize").on('click', function(){                
+                $("#autodocCommentsContainer").resizable("disable").draggable("disable");
+                $("#autodocCommentsContainer").height(28);
+                $("#autodocComments").height(0);
+                $("#autodocCommentsFooter").height(0);
+                $("#autodocCommentsContainer").css('left', 'auto');
+                $("#autodocCommentsContainer").css('top', 'auto');
+                $("#autodocCommentsContainer").css("bottom",'0px');
+                $("#autodocCommentsContainer").css('right', '0px');
+                        
+            });
+             $("#autodocCommentsHeader").on('dblclick', function(){   
+                if($("#autodocComments").height() == 0){
+                    $("#autodocCommentsContainer").resizable("enable").draggable("enable");
+                    $("#autodocCommentsContainer").height(100);
+                    $("#autodocComments").height(50);
+                    $("#autodocCommentsFooter").height(20);
+                    $("#autodocCommentsContainer").css('left', $(window).innerWidth() - $("#autodocCommentsContainer").width() -25  + 'px');
+                    $("#autodocCommentsContainer").css('top', $(window).innerHeight() - $("#autodocCommentsContainer").height() -4 + 'px'); 
+                }else{             
+                    $("#autodocCommentsContainer").resizable("disable").draggable("disable");                    
+                    $("#autodocCommentsContainer").height(28);
+                    $("#autodocComments").height(0);
+                    $("#autodocCommentsFooter").height(0); 
+                    $("#autodocCommentsContainer").css('left', 'auto');
+                    $("#autodocCommentsContainer").css('top', 'auto');
+                    $("#autodocCommentsContainer").css("bottom",'0px');
+                    $("#autodocCommentsContainer").css('right', '0px');
+                }               
+            });
+         });
+       
+     </Script>
+</apex:page>

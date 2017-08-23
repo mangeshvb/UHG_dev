@@ -1,0 +1,398 @@
+<apex:page id="thepage" controller="ACETProducerSearchController" sidebar="false" title="Producer Search" action="{!doinit}" standardStylesheets="true">
+    <apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+    <apex:includeScript value="/support/console/38.0/integration.js" />
+    <apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/main.js')}"/>
+    <apex:form id="theform">
+       <!--  <apex:actionFunction name="createInteraction" action="{!createInteraction}" oncomplete="navigateToDetail();" reRender="theform">
+            <apex:param name="firstNameParam" value="" assignTo="{!firstNameParam}" />
+            <apex:param name="lastNameParam" value="" assignTo="{!lastNameParam}" />
+            <apex:param name="producerIdParam" value="" assignTo="{!producerIdParam}" />
+            </apex:actionfunction> -->
+            <apex:sectionHeader title="Producer Search" />
+            <apex:pageMessages />
+            <apex:pageBlock mode="maindetail">
+                <apex:pageBlockSection >
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Interaction Type" />
+                        <apex:selectList id="sourceOriginator" value="{!SourceOriginator}" size="1">
+                            <apex:selectOptions value="{!SourceOriginators}" />
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            <apex:pageBlock id="pbSearch">
+                <apex:pageblockSection id="pbsSearch" columns="2">
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Producer ID"></apex:outputLabel>
+                        <apex:inputText id="producerId" html-autocomplete="off"
+                            value="{!ProducerId}" maxlength="9" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Agency Name"></apex:outputLabel>
+                        <apex:inputText id="CompanyName" value="{!CompanyName}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Producer Tax ID"></apex:outputLabel>
+                        <apex:inputText id="ProducerTaxID" value="{!producerTaxId}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Last Name"></apex:outputLabel>
+                        <apex:inputText id="LastName" value="{!LastName}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Producer SSN"></apex:outputLabel>
+                        <apex:inputText id="ProducerSSN" value="{!producerSSN}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="First Name"></apex:outputLabel>
+                        <apex:inputText id="firstName" value="{!FirstName}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value=""></apex:outputLabel>
+                    </apex:pageBlockSectionItem>                    
+                    <apex:pageBlockSectionItem id="pbsistate">
+                        <apex:outputLabel value="State"></apex:outputLabel>
+                        <apex:outputPanel layout="none" id="optpnl">
+                            <c:ACETState id="comp" ></c:ACETState>
+                            <!-- to pass value back when the input is disabled in form  -->
+                            <apex:inputHidden id="stateHidden" value="{!State}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageblockSection>
+
+                <apex:pageBlockButtons location="bottom">
+                    <apex:commandButton id="btnSearch" value="Search" onclick="return validate(); return false;" rerender="pbSearchResult,pbsSearch" />
+                    <apex:commandButton id="btnClear" value="Clear" action="{!Clear}" onclick="return ClearSearchCriteria();" />
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+            <apex:actionFunction action="{!search}" name="searchfunction" />
+
+            <apex:pageBlock id="pbSearchResult" title="Producer Search Results"  rendered="{!searched}">
+
+                <c:ACETDataTable attrDatatableWrapper="{!DTWrapper}"/>
+
+                <apex:pageBlockTable value="{!ProducerSearchResults}" var="r" rendered="{!NOT(ISNULL(ProducerSearchResults)) && ProducerSearchResults.size == 0}">>
+                    <apex:column headerValue="Search criteria returned no matches." width="100%" />
+                </apex:pageBlockTable>
+
+            </apex:pageBlock>
+            <c:ACETCaseActions attrShowMisdirectButton="true" attrRefreshNavigationTab="true" rendered="{!searched}" />
+            <script>
+        var $lastName = $("[id$='LastName']");
+        
+        function processDatatable(row, data, dataIndex){
+            var firstName = data.FirstName;
+            var lastName = data.LastName;
+            var producerIdParam = data.ProducerID;
+            if(data.CompanyName != '')
+            {
+                $(row).children().first().html("<a id='groupLink' href='#'>" + data.CompanyName+ "</a>"); 
+                lastName = data.CompanyName;                     
+            }else
+            {
+                $(row).children().eq(1).html("<a id='groupLink' href='#'>" + data.LastName+ "</a>");                      
+            }
+            
+            //$(row).children().eq(1).html("<a id='groupLink' href='#'>" + data.LastName+ "</a>");                      
+            
+            
+            var interactionId = "{!Interaction.Id}";                                                        
+            console.log(row+'----'+data.CompanyName+'firstName-->'+firstName + 'lastName --->'+lastName +'producerIdParam ---->'+producerIdParam +'interactionId --->'+interactionId );
+            //$(row).children().eq(1).on('click', function(e){ 
+            $(row).children().find('#groupLink').on('click', function(e){ 
+                if(!interactionId){                             
+                    Visualforce.remoting.Manager.invokeAction(
+                       '{!$RemoteAction.ACETProducerSearchController.crtInteraction}',
+                       firstName,
+                       lastName,
+                       producerIdParam,                  
+                       function(result, event){
+                           // navigateToDetail(result,data);
+                           var tabName;   
+                           console.log('result.CompanyName--->'+data.CompanyName);                              
+                           if(data.CompanyName != '')
+                           {
+                               tabName = 'Detail' + ' - ' + data.CompanyName;                    
+                           }else
+                           {
+                                tabName = 'Detail' + ' - ' + data.LastName;                    
+                           }
+                            console.log('tabName --->'+tabName );
+                           var vccdParams =  '{!JSENCODE($CurrentPage.parameters.vccdParams)}'; //Added by Ranjit
+                           var url = '/apex/ACETProducerDetail?lastName='+data.LastName+'&firstName='+data.FirstName+'&ProducerId='+data.ProducerID+'&InteractionId='+result+'&subjectId=';
+                           if(data.CompanyName != '')
+                           {
+                               var url = '/apex/ACETProducerDetail?lastName='+data.CompanyName+'&firstName=&ProducerId='+data.ProducerID+'&InteractionId='+result+'&subjectId=';
+                           }else
+                           {
+                               var url = '/apex/ACETProducerDetail?lastName='+data.LastName+'&firstName='+data.FirstName+'&ProducerId='+data.ProducerID+'&InteractionId='+result+'&subjectId=';
+                           }
+                           url = url + '&vccdParams=' + vccdParams; //Added by Ranjit
+                           console.log('url --->'+url );
+                           var tabIdUsngClntId= data.ProducerID;
+                           sforce.console.openPrimaryTab('', url, true, tabName, openSuccess,tabIdUsngClntId);
+                       }, 
+                       {escape: true}
+                   );
+               }else{
+                    navigateToDetail(interactionId,data); 
+               }
+               return false;
+            }); 
+                     
+        }
+        
+        function ClearSearchCriteria()
+        {
+            
+            $("[id$='producerId']").val('');
+            $("[id$='CompanyName']").val('');
+            $("[id$='LastName']").val('');
+            $("[id$='firstName']").val('');
+            $("[id$='searchstate']").val('');
+            $("[id$='ProducerTaxID']").val('');
+            $("[id$='ProducerSSN']").val('');
+            
+            
+            $('input[type="text"]').removeClass("error");
+            $("[id$='pbSearch']").find(".pbError").remove();
+            $("[id$='pbSearchResult']").hide();
+            $('.errorMsg').empty();
+            return true;
+        }
+
+        function validate(){
+           var result = true;
+
+            var $producerId = $("[id$='producerId']");
+            var $firstName = $("[id$='firstName']");
+            var $lastName = $("[id$='LastName']");
+            var $CompanyName = $("[id$='CompanyName']");
+            var $GroupId = $("[id$='GroupID']");
+            var $GroupName = $("[id$='GroupName']");
+            var $producerTaxID = $("[id$='ProducerTaxID']");            
+            var $producerSSN = $("[id$='ProducerSSN']");
+            var $stateval = $("[id$='searchstate']");
+           // alert($producerId);
+            
+            $firstName.val($.trim($firstName.val()));
+            $lastName.val($.trim($lastName.val()));
+            $CompanyName.val($.trim($CompanyName.val()));
+            $producerTaxID.val($.trim($producerTaxID.val()));
+            $producerSSN.val($.trim($producerSSN.val()));
+
+            $('input[type="text"]').removeClass("error");
+            $lastName.removeClass("error").parent().find(".errorMsg").remove();
+            $firstName.removeClass("error").parent().find(".errorMsg").remove();
+            $CompanyName.removeClass("error").parent().find(".errorMsg").remove();
+            $GroupName.removeClass("error").parent().find(".errorMsg").remove();
+            $producerTaxID.removeClass("error").parent().find(".errorMsg").remove();
+            $producerSSN.removeClass("error").parent().find(".errorMsg").remove();
+            $("[id$='pbSearch']").find(".pbError").remove();
+            
+            if($producerId.val() && $producerTaxID.val() && $producerSSN.val())
+            {
+              var errorMsg = 'Error: Please search by either Producer ID or Producer Tax ID or SSN';
+                 $("[id$='pbSearch']").prepend('<div class="pbError">' + errorMsg + '</div>');
+
+              $producerId.addClass("error");
+              $producerTaxID.addClass("error");
+              $producerSSN.addClass("error");
+              result = false;
+            }else if(!$producerId.val() && !$CompanyName.val() &&  !$lastName.val() && !$firstName.val() && !$producerTaxID.val() && !$producerSSN.val() && !$stateval.val()){
+                 var errorMsg = ' Producer ID or Producer Tax ID or Producer SSN or  Agency Name and State or First Name and Last Name is Required.';
+                 $("[id$='pbSearch']").prepend('<div class="pbError">Error: Invalid Data. <br/>' + errorMsg + '</div>');
+
+                 $producerId.addClass("error");
+                 $CompanyName.addClass("error");
+                 $lastName.addClass("error");
+                 $firstName.addClass("error");
+                 $producerTaxID.addClass("error");
+                 $producerSSN.addClass("error");
+                 $stateval.addClass("error");
+                 $("[id$='txtCompanyName']").removeClass('error');
+                result = false;
+             }else if($producerTaxID.val() && $producerTaxID.val().length < 9)
+             {
+                var errorMsg = 'Error: Enter Valid Producer Tax ID';
+                $("[id$='pbSearch']").prepend('<div class="pbError">' + errorMsg + '</div>'); 
+                $producerTaxID.addClass("error");
+                result = false;
+             }else if($producerSSN.val() && $producerSSN.val().length < 9)
+             {
+                var errorMsg = 'Error: Enter Valid Producer SSN';
+                $("[id$='pbSearch']").prepend('<div class="pbError">' + errorMsg + '</div>'); 
+                $producerSSN.addClass("error");
+                result = false;
+             }else if(!$producerSSN.val() && !$producerTaxID.val() && !$producerId.val() && !$CompanyName.val() &&  (!$lastName.val() || !$firstName.val())){
+                if(!$firstName.val() || !$lastName.val()){
+                    var errorMsg = 'ID, Company Name or First Name and Last Name is Required.';
+                    $("[id$='pbSearch']").prepend('<div class="pbError">Error: Invalid Data. <br/>' + errorMsg + '</div>');
+
+                    if(!$producerId.val()) $producerId.addClass("error");
+                    if(!$CompanyName.val()) $CompanyName.addClass("error");
+                    $("[id$='txtCompanyName']").removeClass('error');
+
+                    if(!$firstName.val() && $lastName.val() ){
+                        $firstName.addClass("error");
+                        $("[id$='producerId']").removeClass('error');
+                        $("[id$='CompanyName']").removeClass('error');
+
+                    }
+                    if(!$lastName.val() && $firstName.val()){
+                        $lastName.addClass("error");
+                        $("[id$='producerId']").removeClass('error');
+                        $("[id$='CompanyName']").removeClass('error');
+                    }
+
+              result = false;
+             }
+          }
+            //code to control asterisk validation - Avish
+            var lastNameAsteriskIndex = $lastName.val().indexOf('*');
+            var lastNameStrPartOne = $lastName.val().substring(0,lastNameAsteriskIndex);
+            var lastNameStrPartTwo = $lastName.val().substring(lastNameAsteriskIndex+1,$lastName.val().length);
+
+            var firstNameAsteriskIndex = $firstName.val().indexOf('*');
+            var firstNameStrPartOne = $firstName.val().substring(0,firstNameAsteriskIndex);
+            var firstNameStrPartTwo = $firstName.val().substring(firstNameAsteriskIndex+1,$firstName.val().length);
+
+            var CompanyNameAsteriskIndex = $CompanyName.val().indexOf('*');
+            var CompanyNameStrPartOne = $CompanyName.val().substring(0,CompanyNameAsteriskIndex);
+            var CompanyNameStrPartTwo = $CompanyName.val().substring(CompanyNameAsteriskIndex+1,$CompanyName.val().length);
+
+            if($lastName.val() && $lastName.val().indexOf('*') > -1 && (lastNameStrPartOne.length <3 &&  lastNameStrPartTwo.length < 3)  ){ //&& $lastName.val().length < 4
+
+                var errorMsg = "You must enter at least 3 characters with a wildcard search";
+                $lastName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+                result = false;
+            }
+            if($lastName.val() && $lastName.val().indexOf('*') == -1 && $lastName.val().length < 2){
+                var errorMsg = "You must enter at least 2 characters";
+                $lastName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+                result = false;
+            }
+            if($firstName.val() && $firstName.val().indexOf('*') > -1 && (firstNameStrPartOne.length <3 &&  firstNameStrPartTwo.length < 3) ){  // $firstName.val().length < 3
+                var errorMsg = "You must enter at least 3 characters with a wildcard search";
+                $firstName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+                result = false;
+            }
+            if($firstName.val() && $firstName.val().indexOf('*') == -1 && $firstName.val().length < 2){
+                var errorMsg = "You must enter at least 2 characters";
+                $firstName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+                result = false;
+            }
+            if($CompanyName.val() && $CompanyName.val().indexOf('*') > -1 && (CompanyNameStrPartOne.length <3 &&  CompanyNameStrPartTwo.length < 3)){    //$CompanyName.val().length < 3
+                var errorMsg = "You must enter at least 3 characters with a wildcard search";
+                $CompanyName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+                result = false;
+            }
+            if($CompanyName.val() && $CompanyName.val().indexOf('*') == -1 && $CompanyName.val().length < 2){
+                var errorMsg = "You must enter at least 2 characters";
+                $CompanyName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong> ' + errorMsg + '</div>');
+                result = false;
+            }
+            $("[id$='stateHidden']").val($("[id$='searchstate']").val());
+              if(result != false)
+                  {
+                    searchfunction();
+                     return true;
+            }
+
+       }
+        
+        function init(){
+            $("[id$='producerId']").keypress(function (e) {
+
+                var regex = new RegExp("^[a-zA-Z0-9]+$");
+                var str = String.fromCharCode(!e.charCode ? e.which : e.charCode);
+                if (regex.test(str) || (/^(8|9|13|27)$/.test("" + e.keyCode))) {
+                    return true;
+                }
+
+                e.preventDefault();
+                return false;
+            });
+
+        }
+
+        $("input").on("keypress", function(e) {
+            if (e.which === 32 && !this.value.length)
+                e.preventDefault();
+        });
+
+        function clearErrorMessages(){
+            $('input[type="text"]').removeClass("error");
+            $("[id$='pbSearch']").find(".pbError").remove();
+            $('.errorMsg').empty();
+            return false;
+        }
+
+       function navigateToDetail(){
+
+                var tabName = 'Detail' + ' - ' + '{!JSENCODE(lastNameParam)}';
+                var vccdParams =  '{!JSENCODE($CurrentPage.parameters.vccdParams)}'; //Added by Ranjit
+                var url = '/apex/ACETProducerDetail?lastName={!JSENCODE(lastNameParam)}&firstName={!JSENCODE(firstNameParam)}&ProducerId={!JSENCODE(producerIdParam)}&InteractionId={!JSENCODE(Interaction.Id)}&subjectId={!JSENCODE(Subject.Id)}' ;
+                url = url + '&vccdParams=' + vccdParams; //Added by Ranjit
+                var tabIdUsngClntId= $lastName.attr('id');
+                sforce.console.openPrimaryTab('', url, true, tabName, openSuccess,tabIdUsngClntId);
+                return false;
+
+       }
+
+        function openSuccess(){
+                //
+            }
+       </script>
+    </apex:form>
+    <script>    
+    function setPriTabStyle(result) { 
+        if (result.success) {
+            sforce.console.setTabStyle('background: ;', result.id);
+        } 
+    }
+    function onloadSetTabTitle() {
+        sforce.console.getEnclosingPrimaryTabId(setPriTabStyle);
+        sforce.console.setTabTitle('Producer Search');            
+    }
+         
+    $(document).ready(function() {
+        onloadSetTabTitle();    
+        $(document).keypress(
+        function(event){
+            if (event.which == '13') {
+                event.preventDefault();
+                $("[id$='btnSearch']").trigger('click');
+            }
+        });
+
+        init();
+
+        //added by bhanu : vccd integration
+       var noAutoSearch = '{!JSENCODE($CurrentPage.parameters.noAutoSearch)}';
+
+       if(noAutoSearch != 'true'){
+           var vccdParams = '{!JSENCODE($CurrentPage.parameters.vccdParams)}';
+           vccdParams =  JSON.parse(vccdParams);
+           if(vccdParams != 'undefined'){
+                   if(vccdParams.producerId != '' || vccdParams.producerId != 'undefined'){
+                       $("[id$='producerId']").val(vccdParams.producerId);
+                   }
+                   if(vccdParams.FirstName != '' || vccdParams.FirstName != 'undefined'){
+                       $("[id$='firstName']").val(vccdParams.FirstName);
+                   }
+                   if(vccdParams.Lastname != '' || vccdParams.Lastname != 'undefined'){
+                       $("[id$='LastName']").val(vccdParams.Lastname);
+                   }if(vccdParams.companyName != '' || vccdParams.companyName != 'undefined'){
+                       $("[id$='CompanyName']").val(vccdParams.companyName);
+                   }
+               $("[id$='btnSearch']").click();
+           }
+       }
+       if('{!ProducerSearchResults.size}' == 1 && noAutoSearch == 'true'){
+           $("[id$='lastNameLink']").click();
+       }
+    });
+    </script>
+    <apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/main.js')}" />
+</apex:page>

@@ -1,0 +1,1118 @@
+<apex:page controller="ACETProviderLookupController" sidebar="false" id="pid">
+    <apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+    <apex:includeScript value="/support/console/30.0/integration.js"/>
+    <apex:includeScript value="{!$Resource.JqueryTableSorter}"></apex:includeScript>
+    <apex:stylesheet value="{!URLFOR($Resource.ACETResources, '/css/m/memberdetail.css')}" />    
+    <apex:includeScript value="/soap/ajax/30.0/connection.js" />
+    <apex:includescript value="//code.jquery.com/jquery-1.11.1.min.js" / >
+  <!--- <apex:stylesheet value="https://cdn.datatables.net/1.10.0/css/jquery.dataTables.css"/>
+    <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"/>
+    <apex:includeScript value="https://cdn.datatables.net/1.10.0/js/jquery.dataTables.js"/> -->
+   
+    <script>
+    function MyFun(MyVal){
+        Array.prototype.filter.call(document.getElementsByClassName("divSpecality"), function(elem){
+            if(MyVal!=null || MyVal!='')
+                elem.style.display = 'block';
+            else
+                elem.style.display = 'none';   
+        });
+    }
+   
+    </script>
+       <style>
+        .headerResultStyle {
+        font-size: 15px;
+        font-weight: Bold;
+        }
+        .bPageBlock .detailList .dataCol {
+        width: 0%;
+        }
+        
+        .PageAlign {
+        width: 168px;
+        }
+        
+        .bPageBlock .detailList .labelCol {
+        width: 8%;
+        }
+        
+        .apexp .bPageBlock.apexDefaultPageBlock .pbBody .pbSubheader .showListButton
+        {
+        background-position: 1px -1px;
+        }
+        
+        .apexp .bPageBlock.apexDefaultPageBlock .pbBody .pbSubheader .hideListButton
+        {
+        background-position: 1px -11px;
+        }
+        
+        .apexp .bPageBlock.apexDefaultPageBlock .pbBody .pbSubheader {
+        border-top: 0;
+        color: 
+        
+        
+        
+        000;
+        }
+        
+        .homeTab .tertiaryPalette, .individualPalette .homeBlock .tertiaryPalette,
+        .layoutEdit .individualPalette .homeBlock .tertiaryPalette {
+        background-color: #fff;
+        border-color: #fff;
+        }
+        
+        
+    </style>
+    
+    <apex:form id="formid">
+        <apex:actionFunction action="{!getFacility}" name="Facility"/>
+        <apex:outputPanel id="hlPanel">
+            <apex:inputHidden id="highlightPanelInfo"
+                              value="{!hpAdditionInfoStr}" />
+            <c:ACETInteractionHighlightsPanel InteractionAtt="{!interaction}"
+                                              SubjectAtt="{!conObj }" AdditionalInfoAtt="{!additionalInfo}"
+                                              html-auto-doc="auto"></c:ACETInteractionHighlightsPanel>
+            
+        </apex:outputPanel><br/>
+        <apex:actionStatus id="refreshMemberStatus">
+            <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                    &nbsp;
+                </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                    <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                        <img src="/img/loading.gif" style="float: left; margin: 8px;" />
+                        <span style="display: inline-block; padding: 10px 0px;">Loading...</span>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>      
+        <apex:outputPanel > 
+            <apex:pageMessages id="pgMsg"></apex:pageMessages>
+            <apex:sectionHeader title="Provider Lookup"/>     
+            
+            <apex:actionfunction name="searchResults" action="{!searchResults}" status="refreshMemberStatus" reRender="opACETDTPLResults,pgMsg" oncomplete="init();initChangeEvents();initDatatable();"/> 
+            <apex:actionfunction name="clearResults" action="{!clearResults}" reRender="pbSearchCriteria,opACETDTPLResults,pgMsg"  oncomplete="init(),initChangeEvents()"/>
+            
+            
+            <c:ACETCaseActions attrCaseDataWrapper="{!acetCallTopicData }"
+                               attrShowSaveAndCloseButton="false" attrShowSaveButton="true"
+                               attrShowMisdirectButton="true" 
+                               attrSourceOriginator="{!acetCallTopicData.SourceOriginator}"
+                               attrInteractionId="{!acetCallTopicData.Interaction.Id}"
+                               attrSubjectId="{!acetCallTopicData.Subject.Id}"
+                               attrCallTopic="Provider Lookup"/ >
+            </apex:outputPanel>
+            <apex:pageblock id="pbSearchCriteria">
+                
+                <apex:pageBlockSection columns="3" id="pbsid">
+                    
+                    <apex:pageblockSectionItem id="pbsttaxid">
+                        <apex:outputLabel id="pbsttaxlabelid">Tax ID</apex:outputLabel>
+                        <apex:inputText value="{!taxId}" id="TaxId" maxlength="9"
+                                        style="width: 164px;" styleclass="PageAlign"/>
+                    </apex:pageblockSectionItem>
+                    
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel >Last Name or Facility/Group Name</apex:outputLabel>
+                        <apex:inputText value="{!lastName}" id="LastName" maxlength="70"
+                                        style="width: 164px;" styleclass="PageAlign"/> 
+                    </apex:pageblockSectionItem>
+                    
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel >Phone Number</apex:outputLabel>
+                        <apex:inputText value="{!phoneNumber}" id="PhoneNumber"
+                                        maxlength="10" style="width: 164px;" styleclass="PageAlign" />
+                    </apex:pageblockSectionItem>
+                    
+                    <apex:pageblockSectionItem id="pbstnetworkid">
+                        <apex:outputLabel id="pbstnetworklabelid">Network</apex:outputLabel>
+                        <apex:selectList value="{!networkval}" size="1"  id="Network" styleclass="PageAlign">
+                            <apex:selectOptions value="{!networkmdt}"/>                                
+                        </apex:selectList>
+                    </apex:pageblockSectionItem> 
+                    
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel >First Name</apex:outputLabel>
+                        <apex:inputText value="{!firstName}" id="FirstName" maxlength="70"
+                                        style="width: 164px;" styleclass="PageAlign" disabled="{!providerType == 'Facility'}"/>
+                    </apex:pageblockSectionItem>
+                    
+                    <apex:pageblockSectionItem id="pbstproviderid">
+                        <apex:outputLabel id="pbstproviderlabelid">Provider ID</apex:outputLabel>
+                        <apex:inputText value="{!searchProviderId}" id="SearchProviderId"
+                                        maxlength="18" style="width: 164px;" styleclass="PageAlign" />
+                    </apex:pageblockSectionItem>
+                    
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel >Provider Type</apex:outputLabel>
+                        <apex:selectList value="{!providerType}" size="1" id="ProviderType"
+                                         styleclass="PageAlign"> <!-- onchange="providerChange(this.value);" >-->
+                            <apex:selectOptions value="{!ProviderTypes}" />
+                            
+                            <apex:actionSupport event="onchange" action="{!providertypechange}" reRender="Classification,Speciality,FirstName,Language,Gender,Newpatients,Existingpatients" oncomplete="initChangeEvents(), initClearDisable();" /> 
+                        </apex:selectList>
+                    </apex:pageblockSectionItem>
+                    
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel >City</apex:outputLabel>
+                        <apex:inputtext value="{!city}" id="City" maxlength="40"
+                                        style="width: 164px;" styleclass="PageAlign" />
+                        
+                    </apex:pageblockSectionItem>
+                    
+                    <apex:pageblockSectionItem id="pbstnpiid">
+                        <apex:outputLabel id="pbstnpilabelid">NPI</apex:outputLabel>
+                        <apex:inputText value="{!npi}" id="NPI" maxlength="10"
+                                        style="width: 164px;" styleclass="PageAlign"/>
+                    </apex:pageblockSectionItem>
+            
+            
+                    
+                    <apex:pageblockSectionItem id="pbClassificationCode">
+                        <apex:outputLabel styleClass="divSpecality">Classification</apex:outputLabel>
+                        <apex:outputpanel styleClass="divSpecality" id="divSpecalityID">
+                            <apex:selectList id="Classification" size="1" style="width:168px;" 
+                                             disabled="{!providerType == null || providerType == ''}"  value="{!SelSpecialityCodes}">
+                                <apex:selectOptions value="{!Classifications}"
+                                                    rendered="{!providerType != null && providerType != ''}" />
+                                <apex:selectOption itemLabel="Select Provider Type" itemValue=""
+                                                   rendered="{!providerType == null || providerType == ''}" />
+                                <apex:actionSupport event="onchange" reRender="Speciality"/>
+                            </apex:selectList>
+                             
+                        </apex:outputpanel>
+                    </apex:pageblockSectionItem>
+                    
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel >State</apex:outputLabel>
+                        <c:ACETStateCode StateCodeContainerAtt="{!stateCode}"></c:ACETStateCode>
+                        
+                    </apex:pageblockSectionItem>
+                    
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel styleClass="pbLanguageid">Language</apex:outputLabel>
+                        <apex:outputpanel styleClass="pbslanguagelabelid" >
+                            <apex:selectList value="{!LanguageVal}" size="1" id="Language" style="width:168px;"
+                                             disabled="{!providerType == 'Facility'}">                                             
+                                <apex:selectOptions value="{!languagescmdt}"/>  
+                                
+                            </apex:selectList>
+                            
+                        </apex:outputpanel>
+                    </apex:pageblockSectionItem>
+                    
+                    
+                   <apex:pageblockSectionItem id="pbSpeciality">
+                        <apex:outputLabel styleClass="divSpecality">Specialty</apex:outputLabel>
+                        <apex:outputpanel styleClass="divSpecality" id="divSpecalityID"> 
+                            <apex:selectList size="1" style="width:168px;" value="{!selectedSpeciality}" id="Speciality"
+                                             disabled="{!SelSpecialityCodes == null || SelSpecialityCodes == '--None--' || providertype == null || providertype == '--None--'}">
+                                <apex:selectOptions value="{!Specialities}"
+                                                    rendered="{!SelSpecialityCodes != null && SelSpecialityCodes != '--None--' && providertype != null && providertype != '--None--'}" />
+                                <apex:selectOption itemLabel="Select Classification" itemValue=""
+                                                   rendered="{!SelSpecialityCodes == null || SelSpecialityCodes == '--None--' || providertype == null || providertype == '--None--'}" />
+                            </apex:selectList>
+                            
+                            
+                        </apex:outputpanel>
+                    </apex:pageblockSectionItem>
+                    
+                    <apex:pageblockSectionItem id="pbsiid">
+                        <apex:outputLabel >Radius</apex:outputLabel>
+                        <apex:selectList size="1" value="{!radious}" styleclass="PageAlign" id="radiousid" > 
+                            <apex:selectOption itemValue="" itemLabel="--None--" />
+                            <apex:selectOption itemValue="1" itemLabel="1" />
+                            <apex:selectOption itemValue="2" itemLabel="2" />
+                            <apex:selectOption itemValue="5" itemLabel="5" />
+                            <apex:selectOption itemValue="10" itemLabel="10" />
+                            <apex:selectOption itemValue="20" itemLabel="20" />
+                            <apex:selectOption itemValue="30" itemLabel="30" />
+                            <apex:selectOption itemValue="50" itemLabel="50" />
+                        </apex:selectList>
+                    </apex:pageblockSectionItem>
+                    
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel >Zip</apex:outputLabel>
+                        <apex:inputText value="{!zipCode}" id="ZipCode" maxlength="5"
+                                        style="width: 164px;" styleclass="PageAlign"/> 
+                    </apex:pageblockSectionItem>
+                    
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel >Gender</apex:outputLabel>
+                        <apex:selectList value="{!gender}" id="Gender" size="1"
+                                         styleclass="PageAlign" disabled="{!providerType == 'Facility'}">
+                            <apex:selectOption itemValue="" itemLabel="--None--" />
+                            <apex:selectOption itemValue="Male" itemLabel="Male" />
+                            <apex:selectOption itemValue="Female" itemLabel="Female" />
+                        </apex:selectList>
+           </apex:pageblockSectionItem>
+                    
+                     <apex:pageblockSectionItem id="pbshowNonPar">
+                        <apex:outputLabel >Show Non-Par</apex:outputLabel>
+                        <apex:inputCheckbox id="showNonPar" disabled="{!IF(memId != null, false, true)}" value="{!showNonParChckBox}"/>
+                    </apex:pageblockSectionItem>                    
+            
+                    <apex:pageblockSectionItem >
+                        &nbsp;
+                    </apex:pageblockSectionItem>
+                   
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel >Accepting New Patients </apex:outputLabel>
+                        <apex:inputCheckbox value="{!NewpatientsInd}" id="Newpatients" disabled="{!providerType == 'Facility'}"/>
+                    </apex:pageblockSectionItem>
+                    
+                    <apex:pageblockSectionItem >
+                        &nbsp;
+                    </apex:pageblockSectionItem>
+                    
+                    <apex:pageblockSectionItem >
+                        &nbsp;
+                    </apex:pageblockSectionItem>   
+                    
+                    <apex:pageblockSectionItem >
+                        
+                        <apex:outputLabel >Accepting Existing Patients </apex:outputLabel>
+                        <apex:inputCheckbox value="{!existingpatientsInd}" id="Existingpatients" disabled="{!providerType == 'Facility'}"/>
+                    </apex:pageblockSectionItem>
+                </apex:pageBlockSection>
+                
+                 
+                <div align="center" draggable="false">
+                    <input type="button" class="btn" value="Search" onClick="return validate_PL();" />
+                    <input type="button" id="btnClearAll" value="Clear" class="btn" OnClick="return ClearSearchCriteria();" style="margin-right: 367px;" />
+                </div>
+                <br />
+               
+            	<apex:outputPanel id="opACETDTPLResults" layout="None">
+	                <apex:pageblock title="Provider Lookup Results" id="pbSearchResults" rendered="{!NOT(ISNULL(PLDTWrapper))}">
+	                	<apex:pageBlockSection columns="1" html-auto-doc="true" html-auto-doc-case-items="true" collapsible="false" rendered="{!NOT(ISNULL(PLDTWrapper))}">
+	                		<c:ACETDataTable id="ACETDTPLResults" attrDatatableWrapper="{!PLDTWrapper}" rendered="{!NOT(ISNULL(PLDTWrapper))}"/>
+	                	</apex:pageBlockSection>
+	                </apex:pageblock>
+                </apex:outputPanel> 
+            </apex:pageblock>
+            
+            <c:ACETCaseActions attrCaseDataWrapper="{!acetCallTopicData }"
+                               attrShowSaveAndCloseButton="false" attrShowSaveButton="true"
+                               attrShowMisdirectButton="true" 
+                               attrSourceOriginator="{!acetCallTopicData .SourceOriginator}"
+                               attrInteractionId="{!acetCallTopicData .Interaction.Id}"
+                               attrSubjectId="{!acetCallTopicData .Subject.Id}"
+                               attrCallTopic="Provider Lookup"
+                               attrLocation="bottom" />
+            
+            
+            
+        </apex:form>
+        <apex:outputpanel id="scr">
+        <script type="text/javascript">
+       
+        var SearchCriteria = $("[id$='pbSearchCriteria']");
+        var TaxId       = $("[id$='TaxId']"); 
+        var NPI         = $("[id$='NPI']");
+        var LastName    = $("[id$='LastName']");
+        var FirstName   = $("[id$='FirstName']");
+        var ZipCode     = $("[id$='ZipCode']");
+        var SearchProviderId  = $("[id$='SearchProviderId']");
+        var PhoneNumber  = $("[id$='PhoneNumber']");    
+        var Radius = $("[id$='radiousid']");
+        var ProviderType = $("[id$='ProviderType']"); 
+        var Specialty = $("[id$='Speciality']");
+        var PCPRole = $("[id$='PCPRole']");
+        var Network = $("[id$='Network']"); 
+        var Language = $("[id$='Language']");
+        var City = $("[id$='City']");    
+        var acetstate = $("[id$='acetstate']");    
+        var Gender = $("[id$='Gender']");   
+        var ddlStateCode = $("[id$='ddlStateCode']");   
+        var showNonParChk = $("[id$='showNonPar']");
+        var Classification = $("[id$='Classification']");
+        var Speciality  = $("[id$='Speciality']");
+        
+        
+        function locateInputFields(){
+            SearchCriteria = $("[id$='pbSearchCriteria']");
+            TaxId       = $("[id$='TaxId']"); 
+            NPI         = $("[id$='NPI']");
+            LastName    = $("[id$='LastName']");
+            FirstName   = $("[id$='FirstName']");
+            ZipCode     = $("[id$='ZipCode']");
+            SearchProviderId  = $("[id$='SearchProviderId']");
+            PhoneNumber  = $("[id$='PhoneNumber']");    
+            Radius = $("[id$='radiousid']");
+            ProviderType = $("[id$='ProviderType']"); 
+            pbSpeciality  = $("[id$='pbSpeciality']");
+            pbClassificationCode = $("[id$='pbClassificationCode']");
+            PCPRole = $("[id$='PCPRole']");
+            Network = $("[id$='Network']"); 
+            Language = $("[id$='Language']");
+            City = $("[id$='City']");    
+            acetstate = $("[id$='acetstate']");    
+            Gender = $("[id$='Gender']");   
+            ddlStateCode = $("[id$='ddlStateCode']"); 
+            Classification = $("[id$='Classification']");
+            Speciality  = $("[id$='Speciality']");
+            
+        }
+        
+        function validate_PL() 
+        {  
+            locateInputFields();
+            
+            SearchCriteria.find(".pbError").remove();  
+            TaxId.removeClass("error").parent().find(".errorMsg").remove();
+            NPI.removeClass("error").parent().find(".errorMsg").remove();
+            LastName.removeClass("error").parent().find(".errorMsg").remove();
+            FirstName.removeClass("error").parent().find(".errorMsg").remove();
+            SearchProviderId.removeClass("error").parent().find(".errorMsg").remove();
+            ZipCode.removeClass("error").parent().find(".errorMsg").remove();
+            PhoneNumber.removeClass("error").parent().find(".errorMsg").remove(); 
+            Radius.removeClass("error").parent().find(".errorMsg").remove();
+            City.removeClass("error").parent().find(".errorMsg").remove();
+            Classification.removeClass("error").parent().find(".errorMsg").remove();
+            Speciality.removeClass("error").parent().find(".errorMsg").remove();
+            
+            var ValidationResult = true; 
+            
+            
+            
+            if(FirstName.val()) {
+                console.log('222');
+                if( ( FirstName.val().indexOf('*') >-1 && FirstName.val().length > 2) ) {
+                    if( ( FirstName.val().indexOf('*') != FirstName.val().length-1) ) { 
+                        FirstName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong>&nbsp;Enter at least one character <br/> followed by an asterisk, and no <br/> character after the asterisk, in order <br/> to perform a wildcard search <br/> on the first name field (example: a*)</div>'); 
+                        ValidationResult = false;
+                     } 
+                    
+                }else if ( ( FirstName.val().indexOf('*') >-1 && FirstName.val().length < 2) ) {
+                    FirstName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong>&nbsp;Enter at least one character <br/> followed by an asterisk, and no <br/> character after the asterisk, in order <br/> to perform a wildcard search <br/> on the first name field (example: a*)</div>'); 
+                    ValidationResult = false;
+                }
+                
+            }
+            
+            if(LastName.val()) {
+                console.log('333');
+                if( ( LastName.val().indexOf('*') >-1 && LastName.val().length > 3)) {
+                    if( ( LastName.val().indexOf('*') != LastName.val().length-1) ) {
+                        
+                        LastName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong>&nbsp;Enter at least two characters <br/> followed by an asterisk, and no <br/> character after the asterisk, in order <br/> to perform a wildcard search on<br/> the last name field (example: ab*)</div>');                        
+                        ValidationResult = false;
+                    } 
+                    
+                }else if ( ( LastName.val().indexOf('*') >-1 && LastName.val().length < 3) || ( LastName.val().length < 2) ) {
+                    LastName.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong>&nbsp;Enter at least two characters <br/> followed by an asterisk, and no <br/> character after the asterisk, in order <br/> to perform a wildcard search on<br/> the last name field (example: ab*)</div>'); 
+                    ValidationResult = false;
+                    
+                }
+            }  
+            
+            
+            if(SearchProviderId.val()) {
+                console.log('444');
+                if(SearchProviderId.val().length < 18) {
+                    SearchProviderId.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong>&nbsp;To search by Provider ID number, enter full Provider ID</div>'); 
+                    ValidationResult = false;
+               } 
+               
+               /* else{
+                    ValidationResult = true; 
+                   } */
+            }          
+            if(ZipCode.val()){
+                
+                if(ZipCode.val().length < 5) {
+                    ZipCode.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong>&nbsp;To search by Zip Code, enter five digits</div>'); 
+                    ValidationResult = false;
+                    
+                }  
+              
+            } 
+            
+            
+         /*   if(Radius.val()){
+                
+                if(ZipCode.val().length == 5){
+                    ValidationResult = true;
+                }else{
+                    
+                    Radius.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong>&nbsp;Zip code required for Radius search.</div>'); 
+                    ValidationResult = false;
+                    
+                }
+            } */
+            
+            if(Classification.val() != '' && Speciality.val() == ''){
+                Classification.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong>&nbsp;Classification search requires Specialty.</div>'); 
+                    ValidationResult = false;
+                 }
+             
+             if(NPI.val()){
+                console.log('888');
+                if(NPI.val().length < 10) {
+                    NPI.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong>&nbsp;To search by NPI number, enter ten digits</div>'); 
+                    ValidationResult = false;
+                    
+                } 
+                /*
+                else{
+                    ValidationResult = true; 
+                    
+                } */
+            }
+            if(TaxId.val()){  
+                console.log('999');     
+                if(TaxId.val().length < 9) {
+                    TaxId.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong>&nbsp;To search by Tax ID number, enter nine digits</div>'); 
+                    ValidationResult = false; 
+                    
+                } 
+              /*  else{
+                    console.log('TaxId else');
+                    ValidationResult = true; 
+                    
+                }   */
+            }      
+            if(PhoneNumber.val()){    
+                if(PhoneNumber.val().length < 10) {
+                    PhoneNumber.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong>&nbsp;Enter a valid 10 digit number</div>'); 
+                    ValidationResult = false;  
+                } 
+                /*
+                else{
+                    ValidationResult = true; 
+                } */
+            } 
+          //  console.log(ValidationResult);
+            if ( ValidationResult == false) {
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>{!$Label.ACETProviderSearchReviewErrorMessage}</div>');
+            }else{
+                ValidationResult = combinationValidationCheck();        
+            }
+            console.log(ValidationResult);
+            if(ValidationResult == true){
+                var isAllBlanks = true;
+                $(".PageAlign").each(function(){
+                        if($(this).val() != null && $(this).val() != ''){
+                            isAllBlanks = false;    
+                        }
+                });
+                if(isAllBlanks){
+                    SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>{!$Label.ACETProviderSearchValidCriteriaErrorMessage}</div>');    
+                    ValidationResult = false;
+                }
+            }           
+            /* if(Classification.val()!=''){    
+                if(Speciality.val() == '') {
+                    Speciality.addClass("error").parent().append('<div class="errorMsg"><strong>Error:</strong>&nbsp;Classification search requires Specialty.</div>'); 
+                    ValidationResult = false;  
+                } 
+                else{
+                    ValidationResult = true; 
+                } 
+            } */
+            
+            if(ValidationResult == true){
+                searchResults();
+            }
+            
+            return false;
+        }
+        
+        function processDatatable(row, data, dataIndex){        	        	
+            $(row).children(":nth-child(1)").html("<a id='lnkProviderId' href='#'>" + data.providerId + "</a>");                      
+            var interactionId = "{!JSENCODE(interaction.Id)}";
+                                                                    
+            $(row).children(":nth-child(1)").on('click', function(e) {
+            	var fullName =  data.fullName ? data.fullName : '';
+            	var providerId =  data.providerId ? data.providerId : '';
+            	var taxId =  data.taxId ? data.taxId : '';
+            	var providerType =  data.providerType ? data.providerType : '';
+            	var status =  data.status ? data.status : '';
+            	var network =  data.network ? data.network : '';
+            	var address =  data.address ? data.address : '';
+            	var phoneNumber =  data.phoneNumber ? data.phoneNumber : '';
+            	var speciality =  data.speciality ? data.speciality : '';
+            	var gender =  data.gender ? data.gender : '';
+            	var affiliation =  data.affiliation ? data.affiliation : '';
+            	var PCPRole =  data.PCPRole ? data.PCPRole : '';
+            	var uphd =  data.uphd ? data.uphd : '';
+            	var acceptNewPatient =  data.acceptNewPatient ? data.acceptNewPatient : '';
+            	var Radious =  data.Radious ? data.Radious : '';
+            	var providerTINTypeCode =  data.providerTINTypeCode ? data.providerTINTypeCode : '';
+            	var addressId =  data.addressId ? data.addressId : '';
+            	var addressTypeCode =  data.addressTypeCode ? data.addressTypeCode : '';
+            	var benefitPlanId = data.benefitPlanId ? data.benefitPlanId : '';
+            	var Platinum = data.Platinum ? data.Platinum : '';
+            	AuthorizationNumber_OnClick(fullName, providerId + '_' + taxId, providerType, status, network, address, phoneNumber, speciality, 
+				gender, affiliation, PCPRole, uphd, acceptNewPatient, Radious, providerTINTypeCode, addressId, addressTypeCode, 
+				benefitPlanId, '{!showNonParChckBox}', Platinum); 
+               return false;
+            });            
+        }
+        
+        function drawCallback(settings){
+        	//display autodoc checkboxes                	
+            acet.autodoc.startAutodoc(); 
+        }
+        
+        //this method will return false is any of the conditions mentioned in the "Combination Validation" business rule - US449351 
+        function combinationValidationCheck(){
+            isValid = true;
+            
+            locateInputFields(); //getting a ref of input fields that would be used in the method
+            
+            //combo 1 - Last Name or Facility/Group Name
+            if(TaxId.val() == '' && LastName.val() != '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() == '' && SearchProviderId.val() == '' && 
+               ProviderType.val() == '' && City.val() == '' && NPI.val() == '' && Classification.val()=='' &&
+               Speciality.val() == '' && ddlStateCode.val() == '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() == '' && Gender.val() == ''){
+               isValid = false;
+               SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>Name search requires Last Name or Facility/Group name and at least City + State or Zip Code</div>');
+            }
+            
+            if(TaxId.val() == '' && LastName.val() != '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() == '' && SearchProviderId.val() == '' && 
+               ProviderType.val() != '' && City.val() == '' && NPI.val() == '' && Classification.val()!='' &&
+               Speciality.val() != '' && ddlStateCode.val() == '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() == '' && Gender.val() == ''){
+               isValid = false;
+               SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>Name search requires Last Name or Facility/Group name and at least City + State or Zip Code</div>');
+            }
+            if(TaxId.val() == '' && LastName.val() == '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() != '' && SearchProviderId.val() == '' && 
+               ProviderType.val() != '' && City.val() == '' && NPI.val() == '' && Classification.val()!='' &&
+               Speciality.val() != '' && ddlStateCode.val() == '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() == '' && Gender.val() == ''){
+               isValid = false;
+               SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/> Name search requires Last Name or Facility/Group name and at least City + State or Zip Code</div>');
+            }
+            if(TaxId.val() == '' && LastName.val() != '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() != '' && SearchProviderId.val() == '' && 
+               ProviderType.val() != '' && City.val() == '' && NPI.val() == '' && Classification.val()!='' &&
+               Speciality.val() != '' && ddlStateCode.val() == '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() == '' && Gender.val() == ''){
+               isValid = false;
+               SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>Name search requires Last Name or Facility/Group name and at least City + State or Zip Code</div>');
+            }
+            
+            //combo 2 - Last Name or Facility/Group Name + First Name
+            if(TaxId.val() == '' && LastName.val() != '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() != '' && SearchProviderId.val() == '' &&
+               ProviderType.val() == '' && City.val() == '' && NPI.val() == ''  && Classification.val()=='' &&
+               Speciality.val() == '' && ddlStateCode.val() == '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() == '' && Gender.val() == ''){
+                
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>Name search requires Last Name or Facility/Group name and at least City + State or Zip Code</div>');
+            }
+            
+            //combo 3 - First Name
+            if(TaxId.val() == '' && LastName.val() == '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() != '' && SearchProviderId.val() == '' &&
+               ProviderType.val() == '' && City.val() == '' && NPI.val() == ''  && Classification.val()=='' &&
+               Speciality.val() == '' && ddlStateCode.val() == '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() == '' && Gender.val() == ''){
+                
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>Name search requires Last Name or Facility/Group name and at least City + State or Zip Code</div>');
+            }
+            
+                        
+            //combo 4 - First Name + Zip Code
+            if(TaxId.val() == '' && LastName.val() == '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() != '' && SearchProviderId.val() == '' &&
+               ProviderType.val() == '' && City.val() == '' && NPI.val() == ''  && Classification.val()=='' &&
+               Speciality.val() == '' && ddlStateCode.val() == '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() != '' && Gender.val() == ''){
+                
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>Name search requires Last Name or Facility/Group name and at least City + State or Zip Code</div>');
+            }
+            
+            //combo 5 - First Name + State
+            if(TaxId.val() == '' && LastName.val() == '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() != '' && SearchProviderId.val() == '' &&
+               ProviderType.val() == '' && City.val() == '' && NPI.val() == '' && Classification.val()=='' &&
+               Speciality.val() == '' && ddlStateCode.val() != '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() == '' && Gender.val() == ''){
+                
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>Name search requires Last Name or Facility/Group name and at least City + State or Zip Code</div>');
+            }
+            
+            //combo 6 - First Name + State + Zip
+            if(TaxId.val() == '' && LastName.val() == '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() != '' && SearchProviderId.val() == '' &&
+               ProviderType.val() == '' && City.val() == '' && NPI.val() == '' && Classification.val()=='' &&
+               Speciality.val() == '' && ddlStateCode.val() != '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() != '' && Gender.val() == ''){
+                
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>Name search requires Last Name or Facility/Group name and at least City + State or Zip Code</div>');
+            }
+            
+            //combo 7 - State
+            if(TaxId.val() == '' && LastName.val() == '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() == '' && SearchProviderId.val() == '' &&
+               ProviderType.val() == '' && City.val() == '' && NPI.val() == '' && Classification.val()=='' &&
+               Speciality.val() == '' && ddlStateCode.val() != '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() == '' && Gender.val() == ''){
+                
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>State search requires at least one of the following:Tax ID, NPI, Last Name, Radius, Provider Type, Specialty or Facility/Group Name or Phone Number</div>');
+            }
+            
+            //combo 8 - City
+            if(TaxId.val() == '' && LastName.val() == '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() == '' && SearchProviderId.val() == '' &&
+               ProviderType.val() == '' && City.val() != '' && NPI.val() == '' && Classification.val()=='' &&
+               Speciality.val() == '' && ddlStateCode.val() == '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() == '' && Gender.val() == ''){
+                
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>City search requires State and at least one of the following:Tax ID, NPI, Last Name, Radius, Provider Type, Specialty or Facility/Group Name or Phone Number</div>');
+            }
+            
+            //combo 9 - State + City
+            if(TaxId.val() == '' && LastName.val() == '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() == '' && SearchProviderId.val() == '' &&
+               ProviderType.val() == '' && City.val() != '' && NPI.val() == '' && Classification.val()=='' &&
+               Speciality.val() == '' && ddlStateCode.val() != '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() == '' && Gender.val() == ''){
+                
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>State + City search requires State and at least one of the following:Tax ID, NPI, Last Name, Radius, Provider Type, Specialty or Facility/Group Name or Phone Number</div>');
+            }
+            
+            //combo 10 - State + Zip Code
+            if(TaxId.val() == '' && LastName.val() == '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() == '' && SearchProviderId.val() == '' &&
+               ProviderType.val() == '' && City.val() == '' && NPI.val() == '' && Classification.val()=='' &&
+               Speciality.val() == '' && ddlStateCode.val() != '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() != '' && Gender.val() == ''){
+                
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>State + Zip code search requires radius and at least one of the following:Tax ID, NPI, Last Name, Provider Type, Specialty or Facility/Group Name or Phone Number</div>');
+            }
+            
+            //combo 11 - Provider Type
+            if(TaxId.val() == '' && LastName.val() == '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() == '' && SearchProviderId.val() == '' &&
+               ProviderType.val() != '' && City.val() == '' && NPI.val() == '' && Classification.val()=='' &&
+               Speciality.val() == '' && ddlStateCode.val() == '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() == '' && Gender.val() == ''){
+                
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>Provider Type search requires Specialty and at least one of the following: Tax ID, NPI, Radius + Zip Code, State, Provider ID, Last Name or Facility/Group Name or Phone Number</div>');
+            }
+            
+            /*if(Classification.val==''){
+                alert(clasification);
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>Provider Type search requires Specialty and at least one of the following: Tax ID, NPI, Radius + Zip Code, State, Provider ID, Last Name or Facility/Group Name or Phone Number</div>');
+            }*/
+            
+            //combo 12 - Radius
+            if(Radius.val() != '' && ZipCode.val().length < 5 ){
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>Radius search requires a Zip Code</div>');
+             
+            }
+            
+            //combo 13 - Classification
+            if(Classification.val() != '' && Speciality.val() == ''){
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>Classification search requires Specialty.</div>');
+            }  
+            
+            
+            //combo 14 - Network
+            if(TaxId.val() == '' && LastName.val() == '' &&  PhoneNumber.val() == '' &&
+               Network.val() != '' && FirstName.val() == '' && SearchProviderId.val() == '' &&
+               ProviderType.val() == '' && City.val() == '' && NPI.val() == '' && Classification.val()=='' &&
+               Specialty.val() == '' && ddlStateCode.val() == '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() == '' && Gender.val() == ''){
+                
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>Network search requires at least one of the following: Tax ID, NPI, Radius + Zip Code, State, Provider ID, Last Name, Provider Type+Speciality, or Facility/Group Name or Phone Number</div>');
+            }
+            
+            //combo 15 - Language
+            if(TaxId.val() == '' && LastName.val() == '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() == '' && SearchProviderId.val() == '' &&
+               ProviderType.val() == '' && City.val() == '' && NPI.val() == '' && Classification.val()=='' &&
+               Specialty.val() == '' && ddlStateCode.val() == '' && Language.val() != '' &&
+               Radius.val() == '' && ZipCode.val() == '' && Gender.val() == ''){
+                
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>Language search requires at least one of the following: Tax ID, NPI, Radius + Zip Code, State, Provider ID, Last Name, Provider Type+Speciality, or Facility/Group Name or Phone Number</div>');
+            }
+            
+            //combo 16 - Gender
+            if(TaxId.val() == '' && LastName.val() == '' &&  PhoneNumber.val() == '' &&
+               Network.val() == '' && FirstName.val() == '' && SearchProviderId.val() == '' &&
+               ProviderType.val() == '' && City.val() == '' && NPI.val() == '' && Classification.val()=='' &&
+               Specialty.val() == '' && ddlStateCode.val() == '' && Language.val() == '' &&
+               Radius.val() == '' && ZipCode.val() == '' && Gender.val() != ''){
+                
+                isValid = false;
+                SearchCriteria.prepend('<div class="pbError">{!$Label.ACETProviderSearchInvalidDataErrorMessage}<br/>Gender search requires at least one of the following: Tax ID, NPI, Radius + Zip Code, City + State, Provider ID, Last Name, Provider Type+Speciality, or Facility/Group Name or Phone Number</div>');
+            }
+           
+            return isValid;
+        }
+        
+        
+        function ClearSearchCriteria()
+        {
+            SearchCriteria = $("[id$='pbSearchCriteria']");
+            TaxId       = $("[id$='TaxId']");
+            NPI         = $("[id$='NPI']");
+            LastName    = $("[id$='LastName']");
+            FirstName   = $("[id$='FirstName']");
+            ZipCode     = $("[id$='ZipCode']");
+            SearchProviderId  = $("[id$='SearchProviderId']");
+            PhoneNumber  = $("[id$='PhoneNumber']");    
+            Radius = $("[id$='pid:formid:pbSearchCriteria:pbsid:pbsiid:radiousid']");
+            ProviderType = $("[id$='ProviderType']"); 
+            Specialty = $("[id$='Speciality']");
+            Classification = $("[id$='Classification']");
+            Network = $("[id$='Network']"); 
+            Language = $("[id$='Language']");
+            City = $("[id$='City']");    
+            acetstate = $("[id$='acetstate']");    
+            Gender = $("[id$='Gender']");   
+            ddlStateCode = $("[id$='ddlStateCode']");
+            ExistingPatients = $("[id$='Existingpatients']");
+            NewPatients = $("[id$='Newpatients']");
+            showNonParChk = $("[id$='showNonPar']");
+            
+            SearchCriteria.find(".pbError").remove();  
+            TaxId.removeClass("error").parent().find(".errorMsg").remove();
+            NPI.removeClass("error").parent().find(".errorMsg").remove();
+            LastName.removeClass("error").parent().find(".errorMsg").remove();
+            FirstName.removeClass("error").parent().find(".errorMsg").remove();
+            SearchProviderId.removeClass("error").parent().find(".errorMsg").remove();
+            PhoneNumber.removeClass("error").parent().find(".errorMsg").remove();
+            ZipCode.removeClass("error").parent().find(".errorMsg").remove();
+            FirstName.val('');  
+            LastName.val('');  
+            PhoneNumber.val("");     
+            TaxId.val("");
+            ZipCode.val("");   
+            SearchProviderId.val("");        
+            Radius.val("");              
+            ProviderType.val("--None--");
+            NPI.val("");
+            Network.val("");
+            
+            Classification.val("");
+            Specialty.val("");
+            Gender.val("");
+            acetstate.val("--None--");
+            Language.val("");
+            City.val("");
+            ddlStateCode.val(""); 
+            $("[id$='showNonPar']").removeAttr('checked');
+            $("[id$='Existingpatients']").removeAttr('checked');
+            $("[id$='Newpatients']").removeAttr('checked');
+            clearResults();
+            return true;
+        }
+        
+      
+        function AuthorizationNumber_OnClick(firstName,unique_ProvId_TaxId,providerType,status,network,address,phoneNumber,speciality,gender,affiliation,PCPRole,uphd,acceptNewPatient,radious,providerTINTypeCode,addressId,addressTypeCode,benefitPlanId,ShowNonPar,Platinum) {
+            var varShowNonPar = $("[id$='showNonPar']");
+            //alert('shownonpar**'+varShowNonPar.prop("checked"));
+            var type = unique_ProvId_TaxId.split("_");            
+            var providerId = type[0];
+            var taxId = type[1];
+            var varBenefitPlanId = '{!JSENCODE(benefitPlanId)}';
+            console.log('Platinum :: ' + Platinum);
+            var FullName = firstName.split(" ");
+            var hightlightPanelInfo = $("[id$='highlightPanelInfo']").val(); 
+            var urlParam = 'interactionId={!JSENCODE(interaction.Id)}' +'&' + 'contactId={!JSENCODE(conObj .Id)}' + '&' + 'sourceOriginator={!sourceOriginator}' + '&' + 'additionalInfo=' + hightlightPanelInfo;
+            urlParam +='&'+'providerId='+providerId+'&'+'providerType='+providerType+'&'+'status='+status+'&'+'taxId='+taxId+'&'+'ssn='+''+'&'+'address='+address+'&'+'phoneNumber='+phoneNumber+'&'+'speciality='+speciality+'&'+'gender='+gender+'&'+'network='+network+'&'+'affiliation='+affiliation+'&'+'PCPRole='+PCPRole+'&'+'uphd='+uphd+'&'+'radious='+radious+'&'+'acceptNewPatient='+acceptNewPatient+'&'+'providerTINTypeCode='+providerTINTypeCode+'&'+'addressId='+addressId+'&'+'addressTypeCode='+addressTypeCode+'&benefitPlanId='+varBenefitPlanId+'&ShowNonPar='+varShowNonPar.prop("checked")+'&Platinum='+Platinum;
+            var url;
+            // addCaseItem(firstName);
+            console.log(providerType);
+            if(providerType=='Facility' || providerType=='Facility/Group'){
+                var url = '/apex/ACETProviderFacilityDetails?'+urlParam+'&'+'FacilityName='+encodeURIComponent(firstName); 
+                sforce.console.getEnclosingPrimaryTabId(function(result) {
+                    console.log(result.id);
+                    sforce.console.openSubtab(result.id, url, true,'Prov - '+firstName, null);// null, unique_ProvId_TaxId
+                });
+            }
+            else if(providerType=='Physician'){
+            //var groupNum = '1118478';
+                var url = '/apex/ACETProviderLookUpDetails?'+urlParam+'&'+'FacilityName='+firstName+'&returningFromService=providerLookup'+'&Id={!JSENCODE(memId)}' + '&SRK={!JSENCODE(srkKey)}' +'&grpnum={!JSENCODE(groupNum)}';
+                    url = url + '&' + 'scrId={!JSENCODE(urlscrId)}' + '&' + 'rl={!JSENCODE(urlrelationshipCode)}';
+                    url = url + '&'  +'ssnId={!JSENCODE(urlssn)}'; 
+                    
+                sforce.console.getEnclosingPrimaryTabId(function(result) {
+                    if(FullName[2]!=null){
+                        sforce.console.openSubtab(result.id, url, true,'Prov - '+FullName[2], null);// null, unique_ProvId_TaxId
+                   } else {
+                        sforce.console.openSubtab(result.id, url, true,'Prov - '+FullName[1], null);// null, unique_ProvId_TaxId
+                   }
+                });
+            }
+            //   Facility();
+            
+            return false;         
+        }
+        
+        
+        function init()
+        {
+            
+            $("[id$='TaxId']").keypress(AllowDigitsOnly); 
+            $("[id$='TaxId']").keypress(enterEventFunction);           
+            $("[id$='NPI']").keypress(AllowDigitsOnly); 
+            $("[id$='ZipCode']").keypress(AllowDigitsOnly); 
+            $("[id$='PhoneNumber']").keypress(AllowDigitsOnly);   
+            $("[id$='SearchProviderId']").keypress(NotAllowSpecials); 
+            
+            $("[id$='TaxId'], [id$='NPI'], [id$='PhoneNumber'], [id$='ZipCode']").bind("paste", function(e){
+                var pastedData = '';
+                if(e.originalEvent.clipboardData){
+                    pastedData = e.originalEvent.clipboardData.getData('text');
+                }else{
+                    pastedData = window.clipboardData.getData('text');    
+                }
+                if(!(/^\d+$/.test(pastedData))){
+                    e.preventDefault();    
+                }
+            });
+        }
+        function enterEventFunction(enterEvent){
+            if ((enterEvent.keyCode == 13)) 
+            {   enterEvent.preventDefault();
+             validate_PL();
+            }
+        }    
+        
+        
+        function NotAllowSpecials(e){
+            var valid = (e.which >= 48 && e.which <= 57) || (e.which >= 65 && e.which <= 90) || (e.which >= 97 && e.which <= 122);
+            if (!valid) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        
+        function AllowDigitsOnly(InputElement) 
+        {
+            //Allow delete, tab, enter and escape keys through
+            if (/^(8|9|13|27)$/.test("" + InputElement.keyCode)) 
+            {
+                return true;
+            }
+            
+            var regex = new RegExp("^[0-9]+$");
+            var str = String.fromCharCode(!InputElement.charCode ? InputElement.which : InputElement.charCode);
+            if (regex.test(str)) 
+            {
+                return true;
+            }
+            
+            InputElement.preventDefault();
+            return false;
+        }
+        
+        
+        
+     function initChangeEvents() {
+            
+            $("[name$='FirstName']").change(function() {  
+                var firstName = $("[id$='FirstName']").val();
+                var Language = $("[id$='Language']").val();
+                var gender = $("[id$='Gender']").val();
+                var Newpatients = $("[id$='Newpatients']").prop("checked");
+                var Existingpatients = $("[id$='Existingpatients']").prop("checked");
+                if(firstName.length != 0)
+                {
+                    $("[id$='ProviderType']").val("Physician").change();
+                }
+                else
+                {
+                    if(gender.length == 0 && Language.length == 0 && !Newpatients && !Existingpatients )
+                    {
+                        $("[id$='ProviderType']").val("").change();
+                    }
+                }
+                
+            }); 
+            
+            $("[id$='Gender']").change(function() { 
+                
+                var firstName = $("[id$='FirstName']").val();
+                var Language = $("[id$='Language']").val();
+                var gender = $("[id$='Gender']").val();
+                var Newpatients = $("[id$='Newpatients']").prop("checked");
+                var Existingpatients = $("[id$='Existingpatients']").prop("checked");
+                if(gender.length != 0)
+                {
+                    $("[id$='ProviderType']").val("Physician").change();
+                }
+                else
+                {
+                    if(firstName.length == 0 && Language.length == 0 && !Newpatients && !Existingpatients )
+                    {
+                        $("[id$='ProviderType']").val("").change();
+                    }
+                }
+            });
+            
+            $("[id$='Language']").change(function() {  
+                
+                var firstName = $("[id$='FirstName']").val();
+                var Language = $("[id$='Language']").val();
+                var gender = $("[id$='Gender']").val();
+                var Newpatients = $("[id$='Newpatients']").prop("checked");
+                var Existingpatients = $("[id$='Existingpatients']").prop("checked");
+                if(Language.length != 0)
+                {
+                    $("[id$='ProviderType']").val("Physician").change();
+                }
+                else
+                {
+                    if(firstName.length == 0 && gender.length == 0 && !Newpatients && !Existingpatients )
+                    {
+                        $("[id$='ProviderType']").val("").change();
+                    }
+                }
+            });         
+            
+            $("[id$='Newpatients']").change(function() {  
+                var firstName = $("[id$='FirstName']").val();
+                var Language = $("[id$='Language']").val();
+                var gender = $("[id$='Gender']").val();
+                var Newpatients = $("[id$='Newpatients']").prop("checked");
+                var Existingpatients = $("[id$='Existingpatients']").prop("checked");
+                if(Newpatients )
+                {
+                    $("[id$='ProviderType']").val("Physician").change();
+                }
+                else
+                {
+                    if(firstName.length == 0 && Language.length == 0 && gender.length == 0 && !Existingpatients )
+                    {
+                        $("[id$='ProviderType']").val("").change();
+                    }
+                }
+                
+            });
+            
+            
+            $("[id$='Existingpatients']").change(function() {  
+                
+                var firstName = $("[id$='FirstName']").val();
+                var Language = $("[id$='Language']").val();
+                var gender = $("[id$='Gender']").val();
+                var Newpatients = $("[id$='Newpatients']").prop("checked");
+                var Existingpatients = $("[id$='Existingpatients']").prop("checked");
+                if(Existingpatients )
+                {
+                    $("[id$='ProviderType']").val("Physician").change();
+                }
+                else
+                {
+                    if(firstName.length == 0 && Language.length == 0 && gender.length == 0 && !Newpatients )
+                    {
+                        $("[id$='ProviderType']").val("").change();
+                    }
+                }
+            });
+            
+            
+            
+        }  
+        /* for clearing values after fields are disabled */
+        
+        function initClearDisable(){
+            
+            var providerType = $("[id$='ProviderType']").val();
+            if(providerType == 'Facility')
+            {
+                $("[id$='FirstName']").val(""); 
+                $("[id$='Language']").val(""); 
+                $("[id$='Gender']").val(""); 
+                $("[id$='Newpatients']").removeProp('checked');
+                $("[id$='Existingpatients']").removeProp('checked');
+            }
+            
+        }
+        
+        
+        $(document).ready(function(){
+            init();
+            initChangeEvents();
+            
+            $("[id$='ProviderType']").change(function() {  
+                initClearDisable();
+                
+            });
+            acet.autodoc.startAutodoc();
+            acet.autodoc.createCommentsbox();
+            acet.autodoc.subTabIds = []; 
+            
+            //request autodoc comments from sub tabs
+            var subjectId = '{!conObj.Id}';
+            acet.autodoc.getAutodocFromSubTabs = function(){
+                acet.autodoc.additionalInfo = '';              
+                sforce.console.fireEvent('RequestProviderDetail_'.concat(subjectId), subjectId);                   
+            };
+            
+            //receive autodoc comments from sub tabs                      
+            sforce.console.addEventListener('ReceiveProviderDetail_'.concat(subjectId), function(r){          
+                var res = JSON.parse(r.message);     
+                acet.autodoc.subTabIds.push(res.subTabId);                                               
+                acet.autodoc.additionalInfo = acet.autodoc.additionalInfo + res.doc; 
+                
+                //close sub tab
+                sforce.console.closeTab(res.subTabId);                                      
+            });   
+            
+            //close all sub tabs
+            acet.autodoc.closeSubTabs = function(){
+                sforce.console.fireEvent('CloseProviderDetailSubTab_'.concat(subjectId), subjectId);    
+            };
+            
+            //sync comments between claim search and claim details tabs
+            //only fire at last keyup moin
+            var timer;
+            $("#autodocComments").keyup(function(){
+                clearTimeout(timer);  
+                timer = setTimeout(function(){
+                    sforce.console.fireEvent('ProviderCommentsUpdated_'.concat(subjectId), $("#autodocComments").val()); 
+                }, 500);   
+            }); 
+            
+            sforce.console.addEventListener('ProviderCommentsUpdated_'.concat(subjectId), function(r){
+                $("#autodocComments").val(r.message);                
+            }); 
+            
+            //send comments to detail page when requested
+            sforce.console.addEventListener('RequestProviderComments_'.concat(subjectId), function(r){
+                console.log('received');
+                sforce.console.fireEvent('ProviderCommentsUpdated_'.concat(subjectId), $("#autodocComments").val());                                         
+            });  
+            
+            //on key press - check for enter/return key - execute the search
+            $(document).keypress(function(e) {
+                if(e.which == 13 || e.keyCode == 13) {
+                    $('[id$="btnSearch"]').trigger('click');
+                }
+            });
+        });        
+           
+        </script>
+        </apex:outputpanel>
+     
+        <apex:includeScript value="{!URLFOR($Resource.ACETResources, '/js/main.js')}" />
+    </apex:page>

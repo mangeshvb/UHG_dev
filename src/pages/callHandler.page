@@ -1,0 +1,86 @@
+<apex:page >
+<apex:includeScript value="{!$Resource.JQuery}"></apex:includeScript>
+<apex:includeScript value="/support/console/38.0/integration.js" />
+<script>
+$(document).ready(function(){  
+    setInterval(testGetPrimaryTabIds,3000); 
+});
+function testGetPrimaryTabIds() {
+      sforce.console.getPrimaryTabIds(showTabId);
+}
+var showTabId = function showTabId(result) {
+    //Display the primary tab IDs
+    var callRecieved =  localStorage.getItem("CallRecievedJSON");
+    var vccdParams = JSON.parse(callRecieved);
+    var memberFlowUrl = "/apex/ACETMemberSearch?vccdParams=";
+    var producerFlowUrl = "/apex/ACETProducerSearch?vccdParams=";
+    var providerFlowUrl = "/apex/ACETProviderSearch?vccdParams=";
+    var groupFlowUrl = "/apex/ACETSearchEmployerGroup?vccdParams=";
+    if(callRecieved){
+        if(vccdParams != undefined && vccdParams != ''){
+            if(result.ids != ''){
+                if(vccdParams.memberId != '' && vccdParams.memberId != undefined && (vccdParams.TaxID == '' || vccdParams.TaxID == undefined) && (vccdParams.groupId == '' || vccdParams.groupId == undefined )){                
+                    sforce.console.openPrimaryTab(null, memberFlowUrl + JSON.stringify(vccdParams) , false,'Member Search',openSuccess);
+                    localStorage.removeItem("CallRecievedJSON"); 
+                }
+                else if(vccdParams.TaxID != undefined && vccdParams.TaxID != ''){
+                    sforce.console.openPrimaryTab(null, providerFlowUrl + JSON.stringify(vccdParams) , false,'Provider Search',openSuccess);
+                    localStorage.removeItem("CallRecievedJSON"); 
+                }
+                else if(vccdParams.producerId != undefined && vccdParams.producerId != '' ){
+                    sforce.console.openPrimaryTab(null, producerFlowUrl + JSON.stringify(vccdParams) , false,'Producer Search',openSuccess);
+                    localStorage.removeItem("CallRecievedJSON"); 
+                }
+                else if(vccdParams.groupId != undefined && vccdParams.groupId != '' && (vccdParams.producerId == undefined || vccdParams.producerId == '')){
+                    sforce.console.openPrimaryTab(null, groupFlowUrl + JSON.stringify(vccdParams) , false,'Group Search',openSuccess);
+                    localStorage.removeItem("CallRecievedJSON"); 
+                }
+            }   
+            else {
+                if(vccdParams.memberId != '' && vccdParams.memberId != undefined && (vccdParams.TaxID == '' || vccdParams.TaxID == undefined ) && (vccdParams.groupId == '' || vccdParams.groupId == undefined )){                
+                    sforce.console.openPrimaryTab(null, memberFlowUrl + JSON.stringify(vccdParams) , true,'Member Search');
+                    localStorage.removeItem("CallRecievedJSON"); 
+                }
+                else if(vccdParams.TaxID != undefined && vccdParams.TaxID != ''){
+                    sforce.console.openPrimaryTab(null, providerFlowUrl + JSON.stringify(vccdParams) , true,'Provider Search');
+                    localStorage.removeItem("CallRecievedJSON"); 
+                }
+                else if(vccdParams.producerId != undefined && vccdParams.producerId != '' ){
+                    sforce.console.openPrimaryTab(null, producerFlowUrl + JSON.stringify(vccdParams) , true,'Producer Search');
+                    localStorage.removeItem("CallRecievedJSON"); 
+                }
+                else if(vccdParams.groupId != undefined && vccdParams.groupId != '' && (vccdParams.producerId == undefined || vccdParams.producerId == '')){
+                    sforce.console.openPrimaryTab(null, groupFlowUrl + JSON.stringify(vccdParams) , true,'Group Search');
+                    localStorage.removeItem("CallRecievedJSON"); 
+                }
+            }         
+        }        
+    }
+};
+function flashtext(ele,col) {
+var tmpColCheck = document.getElementById( ele ).style.color;
+  if (tmpColCheck === 'silver') {
+    document.getElementById( ele ).style.color = col;
+  } else {
+    document.getElementById( ele ).style.color = 'silver';
+  }
+}
+var openSuccess = function openSuccess(result) {
+    //Report whether opening the new tab was successful
+    if (result.success == true) {
+        sforce.console.setTabStyle('background: #75fc68 ;', result.id);
+        //alert('----IN------->'+ result.id);
+        //alert('----TABID------->'+ 'navigatortab__'+result.id);
+        //var ptabid = 'navigatortab__' + result.id ;
+        //var test = document.getElementById( ptabid );
+        //cosole.log('----test------->'+ test );
+        //setInterval(function() {
+          //  flashtext('navigatortab__' + result.id,'red');
+        //}, 500 );
+    } else {
+    }
+};
+
+
+</script>
+</apex:page>

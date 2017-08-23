@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Case Item</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Case Items</value>
+    </caseValues>
+    <fields>
+        <label><!-- Case --></label>
+        <name>Case__c</name>
+        <relationshipLabel><!-- Case Items --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Closed Reason --></label>
+        <name>ClosedReason__c</name>
+    </fields>
+    <fields>
+        <help><!-- Check box when work item is complete --></help>
+        <label><!-- Complete --></label>
+        <name>Complete__c</name>
+    </fields>
+    <fields>
+        <label><!-- External ID --></label>
+        <name>ExternalID__c</name>
+    </fields>
+    <fields>
+        <label><!-- Group Number --></label>
+        <name>Group_Number__c</name>
+    </fields>
+    <fields>
+        <label><!-- Resolved By --></label>
+        <name>ResolvedBy__c</name>
+    </fields>
+    <fields>
+        <label><!-- Resolved Date --></label>
+        <name>ResolvedDate__c</name>
+    </fields>
+    <fields>
+        <label><!-- Resolved --></label>
+        <name>Resolved__c</name>
+    </fields>
+    <fields>
+        <label><!-- Status --></label>
+        <name>Status__c</name>
+        <picklistValues>
+            <masterLabel>Resolved</masterLabel>
+            <translation><!-- Resolved --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Unresolved</masterLabel>
+            <translation><!-- Unresolved --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <label><!-- Subtype --></label>
+        <name>Subtype__c</name>
+    </fields>
+    <fields>
+        <label><!-- Type --></label>
+        <name>Type__c</name>
+    </fields>
+    <fields>
+        <label><!-- Webservice Name --></label>
+        <name>Webservice_Name__c</name>
+    </fields>
+    <fields>
+        <label><!-- Webservice Parameters --></label>
+        <name>Webservice_Parameters__c</name>
+    </fields>
+    <layouts>
+        <layout>Case Item Layout</layout>
+        <sections>
+            <label><!-- Additional Information --></label>
+            <section>Additional Information</section>
+        </sections>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+    </layouts>
+    <startsWith>Consonant</startsWith>
+</CustomObjectTranslation>

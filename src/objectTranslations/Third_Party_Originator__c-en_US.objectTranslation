@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Third Party Originator</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Third Party Originators</value>
+    </caseValues>
+    <fields>
+        <label><!-- Other Originator --></label>
+        <name>Other_Originator__c</name>
+        <picklistValues>
+            <masterLabel>Attorney</masterLabel>
+            <translation><!-- Attorney --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Caregiver</masterLabel>
+            <translation><!-- Caregiver --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Collection Agency</masterLabel>
+            <translation><!-- Collection Agency --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Family/Friend/Spouse</masterLabel>
+            <translation><!-- Family/Friend/Spouse --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Insurance Carrier</masterLabel>
+            <translation><!-- Insurance Carrier --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Parent/Guardian</masterLabel>
+            <translation><!-- Parent/Guardian --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Pharmacy</masterLabel>
+            <translation><!-- Pharmacy --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Prospective Member</masterLabel>
+            <translation><!-- Prospective Member --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Provider</masterLabel>
+            <translation><!-- Provider --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Reporter</masterLabel>
+            <translation><!-- Reporter --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Representative</masterLabel>
+            <translation><!-- Representative --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>State Regulatory Agent/Government Agency</masterLabel>
+            <translation><!-- State Regulatory Agent/Government Agency --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>UHG Employee</masterLabel>
+            <translation><!-- UHG Employee --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <label><!-- Subject --></label>
+        <name>Subject__c</name>
+        <relationshipLabel><!-- Third Party Originators --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Third Party --></label>
+        <name>Third_Party__c</name>
+        <relationshipLabel><!-- Third Party Originators --></relationshipLabel>
+    </fields>
+    <layouts>
+        <layout>Third Party Originator Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+    </layouts>
+    <startsWith>Consonant</startsWith>
+</CustomObjectTranslation>
