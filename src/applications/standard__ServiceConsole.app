@@ -4,6 +4,7 @@
     <detailPageRefreshMethod>none</detailPageRefreshMethod>
     <enableCustomizeMyTabs>false</enableCustomizeMyTabs>
     <enableKeyboardShortcuts>true</enableKeyboardShortcuts>
+    <enableListViewHover>true</enableListViewHover>
     <enableListViewReskin>true</enableListViewReskin>
     <enableMultiMonitorComponents>true</enableMultiMonitorComponents>
     <enablePinTabs>true</enablePinTabs>
@@ -173,23 +174,10 @@
     <tab>standard-Opportunity</tab>
     <tab>standard-Lead</tab>
     <tab>standard-Knowledge</tab>
-    <tab>standard-Document</tab>
-    <tab>Third_Party__c</tab>
-    <tab>Third_Party_Originator__c</tab>
-    <tab>Swivel_Topic__c</tab>
-    <tab>Property_New__c</tab>
+    <tab>Doctor__c</tab>
     <workspaceMappings>
         <mapping>
-            <tab>Property_New__c</tab>
-        </mapping>
-        <mapping>
-            <tab>Swivel_Topic__c</tab>
-        </mapping>
-        <mapping>
-            <tab>Third_Party_Originator__c</tab>
-        </mapping>
-        <mapping>
-            <tab>Third_Party__c</tab>
+            <tab>Doctor__c</tab>
         </mapping>
         <mapping>
             <tab>standard-Account</tab>
@@ -201,9 +189,6 @@
         <mapping>
             <fieldName>AccountId</fieldName>
             <tab>standard-Contact</tab>
-        </mapping>
-        <mapping>
-            <tab>standard-Document</tab>
         </mapping>
         <mapping>
             <tab>standard-Knowledge</tab>

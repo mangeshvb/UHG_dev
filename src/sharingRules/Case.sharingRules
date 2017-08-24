@@ -1,17 +1,3 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SharingRules xmlns="http://soap.sforce.com/2006/04/metadata">
-    <sharingCriteriaRules>
-        <fullName>View_and_Edit_All_Cases</fullName>
-        <accessLevel>Edit</accessLevel>
-        <description>Allows agents to view and edit all cases</description>
-        <label>View and Edit All Cases</label>
-        <sharedTo>
-            <group>View_and_Edit_All_Cases</group>
-        </sharedTo>
-        <criteriaItems>
-            <field>CaseNumber</field>
-            <operation>notEqual</operation>
-            <value>NULL</value>
-        </criteriaItems>
-    </sharingCriteriaRules>
-</SharingRules>
+<SharingRules xmlns="http://soap.sforce.com/2006/04/metadata"/>
+
