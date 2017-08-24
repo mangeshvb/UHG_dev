@@ -68,11 +68,11 @@
         <members>*</members>
         <name>CompactLayout</name>
     </types>
-    <types>
+	<types>
         <members>*</members>
         <name>CustomApplication</name>
     </types>
-    <types>
+	<types>
         <members>*</members>
         <name>CustomApplicationComponent</name>
     </types>
@@ -151,6 +151,7 @@
         <members>PricebookEntry</members>
         <members>Product2</members>
         <members>Provider_Taxonomy__mdt</members>
+<!--         <members>Restricted_Policy_Number__c</members> -->
         <members>Route_Log__c</members>
         <members>Routing_Configuration__c</members>
         <members>ServiceContract</members>
@@ -187,6 +188,14 @@
         <members>*</members>
         <name>Dashboard</name>
     </types>
+<!--     <types> -->
+<!--         <members>*</members> -->
+<!--         <name>DelegateGroup</name> -->
+<!--     </types> -->
+<!--     <types> -->
+<!--         <members>SharedDocuments/White_Logo.png</members> -->
+<!--         <name>Document</name> -->
+<!--     </types> -->
     <types>
         <members>*</members>
         <name>DuplicateRule</name>
@@ -199,10 +208,14 @@
         <members>*</members>
         <name>EscalationRules</name>
     </types>
+<!--     <types> -->
+<!--         <members>*</members> -->
+<!--         <name>Flow</name> -->
+<!--     </types> -->
     <types>
         <members>*</members>
         <name>FlowDefinition</name>
-    </types>
+    </types>  
     <types>
         <members>*</members>
         <name>Group</name>
@@ -247,10 +260,10 @@
         <members>*</members>
         <name>PathAssistant</name>
     </types>
-    <types>
-        <members>*</members>
-        <name>Profile</name>
-    </types>
+     <types> 
+         <members>*</members> 
+        <name>Profile</name> 
+     </types>
     <types>
         <members>*</members>
         <name>Queue</name>
@@ -353,5 +366,5 @@
         <members>Security</members>
         <name>Settings</name>
     </types>
-    <version>37.0</version>
+    <version>40.0</version>
 </Package>
