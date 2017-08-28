@@ -14,7 +14,7 @@
     </taskdef>
 	
 	<target name="proxy">
-		<property name="proxy.host" value=" ptproxy.persistent.co.in " />
+		<property name="proxy.host" value=" ptproxy.persistent.co.in" />
 		<property name="proxy.port" value="8080" />
 		<property name="proxy.user" value="mangesh_belsare" />
 		<property name="proxy.pwd" value="Gamma$123" />
@@ -26,6 +26,7 @@
         password="${sf.password}" 
         serverurl="${sf.serverurl}" 
         runAllTests="true"
+		maxPoll="${sf.maxPoll}"
         logType="Detail"
         deployRoot="src"/>
     </target>
