@@ -13,6 +13,10 @@
         <name>Profile</name> 
     </types> -->
     <types>
+	    <members>*</members>
+	    <name>CustomField</name>
+	</types>
+    <types>
         <members>*</members>
         <name>Layout</name>
     </types>
