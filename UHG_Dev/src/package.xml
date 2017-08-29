@@ -99,7 +99,9 @@
         <name>CustomTab</name>
     </types>
     <types>
-        <members>*</members>
+        <members>Appointment</members>
+        <members>Doctor</members>
+        <members>Patients</members>
         <name>Workflow</name>
     </types>
     <types>

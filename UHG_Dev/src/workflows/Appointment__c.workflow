@@ -13,7 +13,7 @@
             <type>user</type>
         </recipients>
         <recipients>
-            <recipient>nishith1@persistent.com</recipient>
+            <recipient>nishith12@persistent.com</recipient>
             <type>user</type>
         </recipients>
         <senderType>CurrentUser</senderType>
@@ -32,7 +32,7 @@
             <type>user</type>
         </recipients>
         <recipients>
-            <recipient>nishith1@persistent.com</recipient>
+            <recipient>nishith12@persistent.com</recipient>
             <type>user</type>
         </recipients>
         <senderType>CurrentUser</senderType>

@@ -29,7 +29,7 @@
             <type>user</type>
         </recipients>
         <recipients>
-            <recipient>rashika@persistent.co.in</recipient>
+            <recipient>rashika1@persistent.co.in</recipient>
             <type>user</type>
         </recipients>
         <senderType>CurrentUser</senderType>
