@@ -102,7 +102,7 @@
         <members>Appointment__c</members>
         <members>Doctor__c</members>
         <members>Patients__c</members>
-        <name>Workflow__c</name>
+        <name>Workflow</name>
     </types>
     <types>
         <members>*</members>
