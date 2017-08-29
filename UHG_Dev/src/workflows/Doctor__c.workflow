@@ -25,7 +25,7 @@
         <description>please approve the addition of doc</description>
         <protected>true</protected>
         <recipients>
-            <recipient>mangesh_dev1@persistent.com</recipient>
+            <recipient>mangesh_dev11@persistent.com</recipient>
             <type>user</type>
         </recipients>
         <recipients>

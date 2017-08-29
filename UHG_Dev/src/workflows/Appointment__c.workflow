@@ -9,7 +9,7 @@
             <type>user</type>
         </recipients>
         <recipients>
-            <recipient>nishith11@persistent.com</recipient>
+            <recipient>nishith12@persistent.com</recipient>
             <type>user</type>
         </recipients>
         <recipients>
@@ -28,7 +28,7 @@
             <type>user</type>
         </recipients>
         <recipients>
-            <recipient>nishith11@persistent.com</recipient>
+            <recipient>nishith12@persistent.com</recipient>
             <type>user</type>
         </recipients>
         <recipients>

@@ -17,11 +17,11 @@
         <type>user</type>
     </allowedSubmitters>
     <allowedSubmitters>
-        <submitter>mangesh_dev1@persistent.com</submitter>
+        <submitter>mangesh_dev11@persistent.com</submitter>
         <type>user</type>
     </allowedSubmitters>
     <allowedSubmitters>
-        <submitter>nishith11@persistent.com</submitter>
+        <submitter>nishith12@persistent.com</submitter>
         <type>user</type>
     </allowedSubmitters>
     <allowedSubmitters>
@@ -42,7 +42,7 @@
         <allowDelegate>true</allowDelegate>
         <assignedApprover>
             <approver>
-                <name>rashika@persistent.co.in</name>
+                <name>rashika1@persistent.co.in</name>
                 <type>user</type>
             </approver>
             <whenMultipleApprovers>FirstResponse</whenMultipleApprovers>
