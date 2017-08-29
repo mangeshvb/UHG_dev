@@ -99,10 +99,10 @@
         <name>CustomTab</name>
     </types>
     <types>
-        <members>Appointment</members>
-        <members>Doctor</members>
-        <members>Patients</members>
-        <name>Workflow</name>
+        <members>Appointment__c</members>
+        <members>Doctor__c</members>
+        <members>Patients__c</members>
+        <name>Workflow__c</name>
     </types>
     <types>
         <members>*</members>
