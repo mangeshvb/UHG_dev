@@ -70,7 +70,7 @@
         <name>Profile</name>
     </types>
     <types>
-        <members>unfiled$public</members>
+        <members>*</members>
         <name>Report</name>
     </types>
     <types>
