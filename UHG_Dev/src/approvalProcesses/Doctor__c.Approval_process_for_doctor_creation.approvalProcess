@@ -8,14 +8,14 @@
     <allowedSubmitters>
         <type>owner</type>
     </allowedSubmitters>
-    <allowedSubmitters>
+  <!--  <allowedSubmitters>
         <submitter>insightssecurity@00d7f000001aovzuam.com</submitter>
         <type>user</type>
     </allowedSubmitters>
     <allowedSubmitters>
         <submitter>integration@00d7f000001aovzuam.com</submitter>
         <type>user</type>
-    </allowedSubmitters>
+    </allowedSubmitters> -->
     <allowedSubmitters>
         <submitter>mangesh_dev11@persistent.com</submitter>
         <type>user</type>

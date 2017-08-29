@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
-    <alerts>
+<!--     <alerts>
         <fullName>mail_to_patient_for_receipt</fullName>
         <description>mail to patient for receipt</description>
         <protected>false</protected>
@@ -18,7 +18,7 @@
         </recipients>
         <senderType>CurrentUser</senderType>
         <template>unfiled$public/patient_prescription_and_next_visit</template>
-    </alerts>
+    </alerts> -->
   <!--   <alerts>
         <fullName>patients_presrciption_and_next_visit_date</fullName>
         <description>patients presrciption and next visit date</description>
