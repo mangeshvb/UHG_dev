@@ -107,8 +107,13 @@
         <name>ApexClass</name>
     </types>
     <types>
+        <members>User</members>
         <members>*</members>
         <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Hospital_Management_System_UtilityBar</members>
+        <name>FlexiPage</name>
     </types>
     <version>38.0</version>
 </Package>
