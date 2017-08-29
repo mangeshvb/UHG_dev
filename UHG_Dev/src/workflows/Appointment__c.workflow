@@ -19,7 +19,7 @@
         <senderType>CurrentUser</senderType>
         <template>unfiled$public/patient_prescription_and_next_visit</template>
     </alerts>
-    <alerts>
+  <!--   <alerts>
         <fullName>patients_presrciption_and_next_visit_date</fullName>
         <description>patients presrciption and next visit date</description>
         <protected>false</protected>
@@ -37,7 +37,7 @@
         </recipients>
         <senderType>CurrentUser</senderType>
         <template>unfiled$public/patient_prescription_and_next_visit</template>
-    </alerts>
+    </alerts> -->
     <fieldUpdates>
         <fullName>status_update</fullName>
         <field>Appointment_Status__c</field>
