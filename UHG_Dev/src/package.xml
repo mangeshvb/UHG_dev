@@ -47,10 +47,6 @@
         <name>EmailTemplate</name>
     </types>
     <types>
-        <members>Case.Standard</members>
-        <name>EscalationRule</name>
-    </types>
-    <types>
         <members>*</members>
         <name>Flow</name>
     </types>
@@ -68,11 +64,6 @@
         <members>Doctor__c-Temprory Doc</members>
         <members>Patients__c-Patient Layout</members>
         <name>Layout</name>
-    </types>
-    <types>
-        <members>Contact</members>
-        <members>User</members>
-        <name>CustomObject</name>
     </types>
     <types>
         <members>*</members>
@@ -110,6 +101,14 @@
     <types>
         <members>*</members>
         <name>Workflow</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>CustomObject</name>
     </types>
     <version>38.0</version>
 </Package>

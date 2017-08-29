@@ -8,6 +8,18 @@
         <plural>true</plural>
         <value>Patients Trial</value>
     </caseValues>
+    <fields>
+        <label><!-- DOB --></label>
+        <name>DOB__c</name>
+    </fields>
+    <fields>
+        <label><!-- First Name --></label>
+        <name>First_Name__c</name>
+    </fields>
+    <fields>
+        <label><!-- Last Name --></label>
+        <name>Last_Name__c</name>
+    </fields>
     <nameFieldLabel>Patients Name Trial</nameFieldLabel>
     <startsWith>Consonant</startsWith>
 </CustomObjectTranslation>

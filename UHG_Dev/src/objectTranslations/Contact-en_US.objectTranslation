@@ -8,29 +8,5 @@
         <plural>true</plural>
         <value>Patients</value>
     </caseValues>
-    <fields>
-        <label><!-- Languages --></label>
-        <name>Languages__c</name>
-    </fields>
-    <fields>
-        <label><!-- Level --></label>
-        <name>Level__c</name>
-        <picklistValues>
-            <masterLabel>Primary</masterLabel>
-            <translation><!-- Primary --></translation>
-        </picklistValues>
-        <picklistValues>
-            <masterLabel>Secondary</masterLabel>
-            <translation><!-- Secondary --></translation>
-        </picklistValues>
-        <picklistValues>
-            <masterLabel>Tertiary</masterLabel>
-            <translation><!-- Tertiary --></translation>
-        </picklistValues>
-    </fields>
-    <fields>
-        <label><!-- No of Visits --></label>
-        <name>No_of_Visits__c</name>
-    </fields>
     <startsWith>Consonant</startsWith>
 </CustomObjectTranslation>
