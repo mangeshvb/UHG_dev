@@ -28,7 +28,7 @@
         runAllTests="true"
 		maxPoll="${sf.maxPoll}"
         logType="Detail"
-        deployRoot="src"/>
+        deployRoot="UHG_Dev/src"/>
     </target>
 
     <target name="undeployCode">
