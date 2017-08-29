@@ -62,7 +62,7 @@
     </types>
     <types>
         <members>Chairman</members>
-        <members>doctors</members>
+<!--         <members>doctors</members> -->
         <members>doctors and Patient Creator</members>
         <members>Standard</members>
         <members>Admin</members>
