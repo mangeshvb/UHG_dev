@@ -46,10 +46,10 @@
         <members>unfiled$public/SUPPORTSelfServiceResetPasswordSAMPLE</members>
         <name>EmailTemplate</name>
     </types>
-    <types>
-        <members>*</members>
-        <name>Flow</name>
-    </types>
+<!--     <types> -->
+<!--         <members>*</members> -->
+<!--         <name>Flow</name> -->
+<!--     </types> -->
     <types>
         <members>*</members>
         <name>Group</name>
