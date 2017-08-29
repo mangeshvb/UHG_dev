@@ -49,10 +49,10 @@
     </fieldUpdates>
     <rules>
         <fullName>send patient%27s receipt</fullName>
-        <actions>
-            <name>mail_to_patient_for_receipt</name>
-            <type>Alert</type>
-        </actions>
+<!--         <actions> -->
+<!--             <name>mail_to_patient_for_receipt</name> -->
+<!--             <type>Alert</type> -->
+<!--         </actions> -->
         <active>true</active>
         <formula>NOT(ISNULL(Fees__c ))</formula>
         <triggerType>onAllChanges</triggerType>
