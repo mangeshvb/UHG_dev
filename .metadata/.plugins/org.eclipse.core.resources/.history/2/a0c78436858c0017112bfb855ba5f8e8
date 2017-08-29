@@ -1,0 +1,8 @@
+Hi {!Appointment__c.Contacts__c}
+
+The details for precription are as follow ,
+{!Appointment__c.prescriptions__c}
+
+You may visit after one week .
+
+thanks

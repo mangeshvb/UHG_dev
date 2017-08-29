@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Appointment</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Appointments</value>
+    </caseValues>
+    <fields>
+        <label><!-- Appointment Status --></label>
+        <name>Appointment_Status__c</name>
+        <picklistValues>
+            <masterLabel>Booked</masterLabel>
+            <translation><!-- Booked --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>New</masterLabel>
+            <translation><!-- New --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Pending</masterLabel>
+            <translation><!-- Pending --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Rejected</masterLabel>
+            <translation><!-- Rejected --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <label><!-- Contact --></label>
+        <name>Contacts__c</name>
+        <relationshipLabel><!-- Appointments --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Date --></label>
+        <name>Date__c</name>
+    </fields>
+    <fields>
+        <label><!-- Doctor --></label>
+        <lookupFilter>
+            <errorMessage><!-- The doctor is not an approved doctor by the hospital and the doc&apos;s application has been submitted for approval process --></errorMessage>
+            <informationalMessage><!-- Please only select the approved doc --></informationalMessage>
+        </lookupFilter>
+        <name>Doctor__c</name>
+        <relationshipLabel><!-- Appointments --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Fees --></label>
+        <name>Fees__c</name>
+    </fields>
+    <fields>
+        <label><!-- prescriptions --></label>
+        <name>prescriptions__c</name>
+    </fields>
+    <startsWith>Consonant</startsWith>
+    <validationRules>
+        <errorMessage><!-- You cannot fill prescription or fees till your booking is confirmed --></errorMessage>
+        <name>cease_prescription_and_fees_for_pending</name>
+    </validationRules>
+    <validationRules>
+        <errorMessage><!-- the fees cannot be null --></errorMessage>
+        <name>prescription_and_next_visit_rule</name>
+    </validationRules>
+</CustomObjectTranslation>

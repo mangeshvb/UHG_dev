@@ -1,0 +1,6 @@
+<apex:page >
+    Hi
+    <br/>
+    How are you
+    this page is shown in the context of {!$User.FirstName}    
+</apex:page>

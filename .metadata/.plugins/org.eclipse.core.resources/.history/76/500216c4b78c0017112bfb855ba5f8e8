@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>Hospital_Management_System</members>
+        <name>CustomApplication</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>ApprovalProcess</name>
+    </types>
+    <types>
+        <members>Case.Standard</members>
+        <members>Lead.Standard</members>
+        <name>AssignmentRule</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>AuraDefinitionBundle</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>ApexComponent</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>CustomApplicationComponent</name>
+    </types>
+    <types>
+      	<members>*</members>
+        <name>EmailTemplate</name>
+    </types>
+<!--     <types> -->
+<!--         <members>*</members> -->
+<!--         <name>Flow</name> -->
+<!--     </types> -->
+    <types>
+        <members>*</members>
+        <name>Group</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>CustomLabels</name>
+    </types>
+    <types>
+        <members>Contact-Contact Layout</members>
+        <members>Doctor__c-Permanent Doc</members>
+        <members>Doctor__c-Temprory Doc</members>
+        <members>Patients__c-Patient Layout</members>
+        <name>Layout</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>CustomObjectTranslation</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>ApexPage</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>PermissionSet</name>
+    </types>
+    <types>
+        <members>Chairman</members>
+        <members>doctors</members>
+        <members>doctors and Patient Creator</members>
+        <members>Standard</members>
+        <members>Admin</members>
+        <members>StandardAul</members>
+        <name>Profile</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>Report</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>ReportType</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>CustomTab</name>
+    </types>
+    <types>
+        <members>Appointment__c</members>
+        <members>Doctor__c</members>
+        <members>Patients__c</members>
+        <name>Workflow</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>User</members>
+        <members>*</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Hospital_Management_System_UtilityBar</members>
+        <name>FlexiPage</name>
+    </types>
+    <version>38.0</version>
+</Package>
